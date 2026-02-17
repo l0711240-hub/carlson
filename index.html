@@ -830,6 +830,310 @@
     cursor:pointer;
     outline:none;
   }
+
+  /* ─────────────────────────────────────
+     SCENARIO MODE STYLES
+  ──────────────────────────────────────*/
+
+  /* API key setup */
+  .api-setup {
+    max-width: 520px;
+    margin: 40px auto;
+    text-align: center;
+  }
+  .api-input-wrap {
+    display:flex; gap:10px; margin:16px 0;
+  }
+  .api-input {
+    flex:1;
+    background:var(--panel);
+    border:1px solid var(--border2);
+    border-radius:8px;
+    padding:12px 16px;
+    font-family:'Share Tech Mono', monospace;
+    font-size:0.85rem;
+    color:var(--green);
+    outline:none;
+    letter-spacing:0.05em;
+  }
+  .api-input:focus { border-color:var(--green-dim); box-shadow:0 0 12px var(--green-glow); }
+
+  /* Scenario select */
+  .scenario-cards {
+    display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin:20px 0;
+  }
+  .scenario-card {
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:18px;
+    cursor:pointer;
+    transition:all 0.2s;
+    text-align:left;
+  }
+  .scenario-card:hover {
+    border-color:var(--amber-dim);
+    background:rgba(255,179,0,0.05);
+    transform:translateY(-3px);
+  }
+  .scenario-card.selected { border-color:var(--amber); background:rgba(255,179,0,0.08); }
+  .sc-icon { font-size:1.8rem; margin-bottom:8px; }
+  .sc-title {
+    font-family:'Orbitron',monospace; font-size:0.8rem; color:var(--amber);
+    letter-spacing:0.1em; margin-bottom:6px;
+  }
+  .sc-desc { font-size:0.75rem; color:var(--text-dim); line-height:1.6; }
+  .sc-obj {
+    margin-top:8px; padding:6px 10px;
+    background:rgba(255,179,0,0.07);
+    border-radius:4px;
+    font-family:'Share Tech Mono',monospace;
+    font-size:0.68rem; color:var(--amber); letter-spacing:0.05em;
+  }
+
+  /* Comms interface */
+  .comms-header {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:12px 18px;
+    background:var(--panel);
+    border:1px solid var(--border2);
+    border-radius:10px;
+    margin-bottom:14px;
+  }
+  .comms-callsign {
+    font-family:'Orbitron',monospace; font-size:0.9rem; color:var(--amber);
+    letter-spacing:0.15em;
+  }
+  .comms-status {
+    font-family:'Share Tech Mono',monospace; font-size:0.7rem;
+    display:flex; align-items:center; gap:8px;
+  }
+  .status-dot {
+    width:8px; height:8px; border-radius:50%;
+    background:var(--green); box-shadow:0 0 8px var(--green);
+  }
+  .status-dot.amber { background:var(--amber); box-shadow:0 0 8px var(--amber); }
+  .status-dot.red   { background:var(--red);   box-shadow:0 0 8px var(--red); }
+
+  /* Objective bar */
+  .objective-bar {
+    background:rgba(255,179,0,0.06);
+    border:1px solid var(--amber-dim);
+    border-radius:8px;
+    padding:10px 16px;
+    margin-bottom:14px;
+    font-family:'Share Tech Mono',monospace;
+    font-size:0.75rem;
+    color:var(--amber);
+    letter-spacing:0.05em;
+    line-height:1.7;
+  }
+  .obj-item { display:flex; align-items:center; gap:8px; }
+  .obj-check { color:var(--green); }
+  .obj-pending { color:var(--text-dim); }
+
+  /* Message log */
+  .msg-log {
+    background:var(--panel);
+    border:1px solid var(--border2);
+    border-radius:10px;
+    padding:14px;
+    height:280px;
+    overflow-y:auto;
+    margin-bottom:14px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    scroll-behavior:smooth;
+  }
+  .msg-log::-webkit-scrollbar { width:4px; }
+  .msg-log::-webkit-scrollbar-track { background:var(--bg); }
+  .msg-log::-webkit-scrollbar-thumb { background:var(--green-dim); border-radius:2px; }
+
+  .msg-entry {
+    border-radius:8px;
+    padding:10px 14px;
+    font-family:'Share Tech Mono',monospace;
+    font-size:0.78rem;
+    line-height:1.7;
+    animation:fadeIn 0.3s ease;
+  }
+  .msg-entry.incoming {
+    background:rgba(57,255,90,0.06);
+    border-left:3px solid var(--green-dim);
+    color:var(--text);
+  }
+  .msg-entry.outgoing {
+    background:rgba(255,179,0,0.06);
+    border-left:3px solid var(--amber-dim);
+    color:var(--amber);
+    margin-left:20px;
+  }
+  .msg-entry.system {
+    background:rgba(255,58,58,0.05);
+    border-left:3px solid rgba(255,58,58,0.4);
+    color:rgba(255,58,58,0.7);
+    font-size:0.7rem;
+  }
+  .msg-meta {
+    font-size:0.65rem; color:var(--text-dim);
+    margin-bottom:3px; letter-spacing:0.1em;
+  }
+  .msg-morse {
+    font-size:0.7rem; color:var(--text-dim);
+    letter-spacing:0.15em; margin-top:3px;
+    word-break:break-all;
+  }
+
+  /* Transmit panel */
+  .tx-panel {
+    background:var(--panel);
+    border:1px solid var(--border2);
+    border-radius:10px;
+    padding:16px;
+    margin-bottom:12px;
+  }
+  .tx-morse-live {
+    font-family:'Share Tech Mono',monospace;
+    font-size:1.5rem;
+    color:var(--green);
+    letter-spacing:0.3em;
+    min-height:2.2rem;
+    text-shadow:0 0 8px rgba(57,255,90,0.4);
+    word-break:break-all;
+    padding:4px 0;
+  }
+  .tx-decoded-live {
+    font-family:'Orbitron',monospace;
+    font-size:1rem;
+    color:var(--amber);
+    letter-spacing:0.15em;
+    min-height:1.4rem;
+    margin-top:4px;
+  }
+  .tx-word-boundary {
+    display:inline-block;
+    opacity:0.3;
+    margin:0 4px;
+  }
+
+  /* Signal visualizer for incoming */
+  .signal-wave {
+    display:flex; align-items:center; gap:4px;
+    height:36px; overflow:hidden;
+    padding:4px 0;
+    flex-wrap:nowrap;
+  }
+  .sw-dot {
+    width:10px; height:10px; border-radius:50%;
+    flex-shrink:0;
+    background:var(--green);
+    box-shadow:0 0 8px var(--green);
+    opacity:0; transition:opacity 0.04s;
+  }
+  .sw-dash {
+    width:30px; height:10px; border-radius:5px;
+    flex-shrink:0;
+    background:var(--green);
+    box-shadow:0 0 8px var(--green);
+    opacity:0; transition:opacity 0.04s;
+  }
+  .sw-dot.on, .sw-dash.on { opacity:1; }
+
+  /* Progress */
+  .mission-progress {
+    display:flex; gap:8px; align-items:center;
+    font-family:'Share Tech Mono',monospace;
+    font-size:0.7rem; color:var(--text-dim);
+    margin-bottom:10px;
+  }
+  .mp-bar-wrap {
+    flex:1; height:6px; background:var(--panel);
+    border-radius:3px; overflow:hidden;
+    border:1px solid var(--border);
+  }
+  .mp-bar-fill {
+    height:100%;
+    background:linear-gradient(90deg, var(--amber-dim), var(--amber));
+    border-radius:3px;
+    transition:width 0.6s ease;
+  }
+
+  /* Mission complete overlay */
+  .mission-overlay {
+    position:fixed; inset:0;
+    background:rgba(0,0,0,0.85);
+    display:none; align-items:center; justify-content:center;
+    z-index:200;
+  }
+  .mission-overlay.show { display:flex; animation:fadeIn 0.4s; }
+  .mission-box {
+    background:var(--panel);
+    border:1px solid var(--amber);
+    border-radius:16px;
+    padding:40px 50px;
+    text-align:center;
+    box-shadow:0 0 60px rgba(255,179,0,0.2);
+    max-width:500px;
+  }
+  .mission-title {
+    font-family:'Orbitron',monospace; font-size:1.5rem;
+    color:var(--amber); letter-spacing:0.2em; margin-bottom:8px;
+    text-shadow:0 0 20px var(--amber);
+  }
+  .mission-grade {
+    font-family:'Orbitron',monospace; font-size:3.5rem;
+    font-weight:900; margin:16px 0;
+  }
+  .grade-S { color:#ffd700; text-shadow:0 0 30px #ffd700; }
+  .grade-A { color:var(--green); text-shadow:0 0 30px var(--green); }
+  .grade-B { color:var(--amber); text-shadow:0 0 30px var(--amber); }
+  .grade-C { color:var(--text-dim); }
+
+  /* Receive waiting animation */
+  @keyframes rcvPulse {
+    0%,100%{ opacity:0.4; transform:scale(1); }
+    50%{ opacity:1; transform:scale(1.05); }
+  }
+  .rcv-waiting {
+    animation:rcvPulse 1.2s ease-in-out infinite;
+    color:var(--green);
+    font-family:'Share Tech Mono',monospace;
+    font-size:0.8rem;
+    letter-spacing:0.2em;
+  }
+
+  .key-hint {
+    font-family:'Share Tech Mono',monospace;
+    font-size:0.7rem; color:var(--text-dim);
+    letter-spacing:0.1em;
+    text-align:center; margin-top:8px;
+  }
+
+  .word-buffer {
+    display:flex; gap:6px; flex-wrap:wrap;
+    min-height:32px; margin:8px 0;
+  }
+  .wb-char {
+    padding:4px 8px; border-radius:4px;
+    font-family:'Orbitron',monospace; font-size:0.85rem;
+    background:rgba(255,179,0,0.1); border:1px solid var(--amber-dim);
+    color:var(--amber);
+  }
+  .wb-pending {
+    padding:4px 8px; border-radius:4px;
+    font-family:'Share Tech Mono',monospace; font-size:0.85rem;
+    background:var(--panel2); border:1px solid var(--border);
+    color:var(--green); letter-spacing:0.2em;
+  }
+
+  .thinking-dots::after {
+    content:'';
+    animation:dots 1.4s steps(4,end) infinite;
+  }
+  @keyframes dots {
+    0%{content:''} 25%{content:'.'} 50%{content:'..'} 75%{content:'...'} 100%{content:''}
+  }
 </style>
 </head>
 <body>
@@ -879,6 +1183,9 @@
     </button>
     <button class="nav-btn" onclick="showScreen('challenge')" id="nav-challenge">
       <span class="nav-icon">⚡</span>스피드 챌린지
+    </button>
+    <button class="nav-btn" onclick="showScreen('scenario')" id="nav-scenario" style="border-color:var(--amber-dim);color:var(--amber);">
+      <span class="nav-icon">🎖️</span>작전 시나리오
     </button>
 
     <div class="difficulty-section">
@@ -1162,6 +1469,127 @@
       </div>
     </div>
 
+
+    <!-- SCENARIO MODE -->
+    <div class="screen" id="screen-scenario">
+      <div class="screen-title">▸ 작전 시나리오 — AI 통신 훈련</div>
+      <div class="screen-desc">Gemini AI와 실시간 모스부호로 교신합니다. 임무를 완수하세요.</div>
+
+      <!-- STEP 0: API Key input -->
+      <div id="sc-step-apikey">
+        <div class="api-setup">
+          <div style="font-family:'Share Tech Mono';font-size:0.75rem;color:var(--text-dim);letter-spacing:0.1em;margin-bottom:20px;line-height:1.8;">
+            ▸ Google AI Studio에서 발급한 Gemini API 키를 입력하세요<br>
+            <span style="font-size:0.65rem;color:rgba(255,179,0,0.5);">
+              aistudio.google.com → Get API key (무료 사용 가능)
+            </span>
+          </div>
+          <div class="api-input-wrap">
+            <input type="password" class="api-input" id="scApiKey" placeholder="AIza...">
+            <button class="btn btn-amber" onclick="scSaveApiKey()">확인</button>
+          </div>
+          <div style="font-size:0.7rem;color:var(--text-dim);font-family:'Share Tech Mono';letter-spacing:0.05em;">
+            키는 브라우저 내에만 저장되며 외부로 전송되지 않습니다
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 1: Scenario select -->
+      <div id="sc-step-select" class="hidden">
+        <div class="screen-desc" style="margin-bottom:12px;">작전을 선택하세요</div>
+        <div class="scenario-cards" id="scCards"></div>
+        <div class="btn-row" style="margin-top:8px;">
+          <button class="btn btn-amber" id="scStartBtn" onclick="scBeginMission()" disabled>
+            ▶ 작전 개시
+          </button>
+          <button class="btn" onclick="scChangeApiKey()">🔑 API 키 변경</button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Comms interface -->
+      <div id="sc-step-comms" class="hidden">
+
+        <div class="comms-header">
+          <div>
+            <div class="comms-callsign" id="scCallsign">ALPHA-7</div>
+            <div style="font-family:'Share Tech Mono';font-size:0.65rem;color:var(--text-dim);letter-spacing:0.1em;" id="scMissionTitle">—</div>
+          </div>
+          <div class="comms-status">
+            <div class="status-dot" id="scStatusDot"></div>
+            <span id="scStatusText">대기중</span>
+          </div>
+        </div>
+
+        <!-- Mission progress -->
+        <div class="mission-progress">
+          <span>임무 진행도</span>
+          <div class="mp-bar-wrap">
+            <div class="mp-bar-fill" id="scProgressBar" style="width:0%"></div>
+          </div>
+          <span id="scProgressPct">0%</span>
+        </div>
+
+        <!-- Objectives -->
+        <div class="objective-bar" id="scObjectives"></div>
+
+        <!-- Signal visualizer (for incoming) -->
+        <div style="background:var(--panel);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;margin-bottom:12px;">
+          <div style="font-family:'Share Tech Mono';font-size:0.65rem;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:6px;">
+            ▸ 수신 신호
+          </div>
+          <div class="signal-wave" id="scSignalWave"></div>
+          <div style="font-family:'Share Tech Mono';font-size:0.7rem;color:var(--text-dim);margin-top:4px;" id="scRcvStatus">—</div>
+        </div>
+
+        <!-- Message log -->
+        <div class="msg-log" id="scMsgLog">
+          <div class="msg-entry system">
+            <div class="msg-meta">SYSTEM</div>
+            교신 준비 완료. 첫 번째 수신을 기다리세요.
+          </div>
+        </div>
+
+        <!-- Transmit panel -->
+        <div class="tx-panel" id="scTxPanel">
+          <div style="font-family:'Share Tech Mono';font-size:0.65rem;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:8px;display:flex;justify-content:space-between;">
+            <span>▸ 송신 — 스페이스바로 입력</span>
+            <span id="scWordTimer" style="color:var(--amber);"></span>
+          </div>
+
+          <!-- 현재 입력 중인 모스부호 -->
+          <div class="tx-morse-live" id="scTxMorse">—</div>
+
+          <!-- 완성된 글자들 -->
+          <div class="word-buffer" id="scWordBuffer"></div>
+
+          <!-- 전체 입력 문장 미리보기 -->
+          <div class="tx-decoded-live" id="scTxSentence" style="font-size:0.85rem;"></div>
+
+          <div style="display:flex;gap:10px;margin-top:12px;align-items:center;">
+            <div class="key-btn" id="scKeyBtn"
+              onmousedown="scKeyDown()" onmouseup="scKeyUp()"
+              ontouchstart="scKeyDown()" ontouchend="scKeyUp()"
+              style="font-size:0.7rem;padding:14px 28px;">
+              ⬛ SPACE — 모스부호 입력
+            </div>
+            <button class="btn btn-amber" onclick="scSendMessage()" id="scSendBtn" disabled>
+              ▶ 전송 (Enter)
+            </button>
+            <button class="btn" onclick="scClearTx()">✕ 지우기</button>
+          </div>
+          <div class="key-hint">
+            짧게 = · (점) &nbsp;|&nbsp; 길게 = — (선) &nbsp;|&nbsp; 
+            스페이스바 떼고 잠시 기다리면 글자 확정 &nbsp;|&nbsp; Enter = 전송
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn" onclick="scReplayLast()">↺ 마지막 신호 다시 듣기</button>
+          <button class="btn btn-amber" onclick="scAbortMission()" style="margin-left:auto;">⬛ 작전 중단</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1386,6 +1814,7 @@ function showScreen(id) {
   if(id==='transmit') txReset();
   if(id==='word') wordReset();
   if(id==='challenge') chReset();
+  if(id==='scenario') scInit();
 }
 
 function setDifficulty(d, btn) {
@@ -1731,6 +2160,12 @@ document.addEventListener('keydown', e=>{
     const inp = document.getElementById('chInput');
     if(document.activeElement !== inp) inp.focus();
   }
+  // Scenario mode
+  if(document.getElementById('screen-scenario').classList.contains('active')) {
+    if(e.code==='Space' && !e.repeat) { e.preventDefault(); scKeyDown(); }
+    if(e.code==='Enter') { e.preventDefault(); scSendMessage(); }
+    if(e.code==='Backspace') { e.preventDefault(); scClearTx(); }
+  }
 });
 
 document.addEventListener('keyup', e=>{
@@ -1739,6 +2174,10 @@ document.addEventListener('keyup', e=>{
   }
   if(document.getElementById('screen-word').classList.contains('active')) {
     if(e.code==='Space') { e.preventDefault(); wordKeyUp(); }
+  }
+  // Scenario mode
+  if(document.getElementById('screen-scenario').classList.contains('active')) {
+    if(e.code==='Space') { e.preventDefault(); scKeyUp(); }
   }
 });
 
@@ -2032,6 +2471,735 @@ window.addEventListener('load', ()=>{
   buildRefTable();
   showScreen('home');
 });
+
+// ════════════════════════════════════════════════════════════
+//  SCENARIO MODE — AI MORSE COMMS
+// ════════════════════════════════════════════════════════════
+
+// ── Scenario definitions ──────────────────────────────────
+const SCENARIOS = [
+  {
+    id: 'recon',
+    icon: '🔭',
+    title: '전방 정찰 보고',
+    callsign: 'OVERLORD',
+    desc: '전방 참호를 정찰하고 돌아온 당신. 사령부에 보급 현황과 적 참호 관찰 결과를 보고해야 합니다.',
+    objectives: [
+      '적 참호 관찰 결과 보고',
+      '아군 보급 현황 보고',
+      '전투 지속 가능 여부 전달'
+    ],
+    systemPrompt: `You are OVERLORD, a stern naval/military commanding officer communicating via Morse code radio in WWII-era setting.
+The year is 1944, Western Front. The player is a field scout who has just returned from reconnaissance.
+You need to receive THREE pieces of intel from the player: 1) enemy trench observations, 2) supply status, 3) combat readiness.
+
+Rules:
+- Speak in short, military-style sentences (max 2 sentences per message). Use NATO phonetic alphabet naturally.
+- ALL responses MUST be in ENGLISH only (this is morse code, english only).
+- Ask about one thing at a time. Start by identifying the player and asking for their report.
+- When you have received all three intel items clearly, conclude the mission with: "GOOD WORK. MISSION COMPLETE. RETURN TO BASE. OVER AND OUT."
+- If the player's message is unclear or incomplete, ask for clarification once.
+- Judge mission completion based on receiving substantive info about all 3 objectives.
+- Keep each message under 25 words.
+- RESPONSE FORMAT: just the radio message text, no quotes, no labels.
+- Current mission_complete: false. Set to true in your final closing message only.`
+  },
+  {
+    id: 'rescue',
+    icon: '🚑',
+    title: '조난 구조 요청',
+    callsign: 'SEA-WOLF',
+    desc: '구축함이 피격당해 침몰 중입니다. 해안 기지에 구조 요청을 보내고 위치, 생존자 수, 상황을 전달해야 합니다.',
+    objectives: [
+      '함선 위치/좌표 전달',
+      '생존자 수 및 부상자 현황 보고',
+      '긴급도 및 구조 요청 확인'
+    ],
+    systemPrompt: `You are the SEA-WOLF, a coastal rescue station operator. WWII naval setting, 1943 Pacific.
+A damaged destroyer is calling for rescue. You need to receive: 1) ship position/coordinates, 2) survivor count and casualties, 3) urgency level and confirmation.
+
+Rules:
+- Speak in short urgent naval/rescue style. Max 2 sentences.
+- ALL responses MUST be in ENGLISH only.
+- Respond with urgency. Acknowledge each piece of information received.
+- Ask for each piece of info systematically.
+- When you have received all 3 pieces of intel clearly, close with: "RESCUE TEAM DISPATCHED. HOLD POSITION. MISSION COMPLETE. OUT."
+- Keep messages under 25 words.
+- RESPONSE FORMAT: just the radio message, no quotes, no labels.`
+  },
+  {
+    id: 'artillery',
+    icon: '💣',
+    title: '포격 좌표 유도',
+    callsign: 'THUNDER-1',
+    desc: '전방 관측병으로서 포병 부대에 적 집결지 좌표와 사격 수정을 전달해야 합니다.',
+    objectives: [
+      '목표 좌표 전달',
+      '목표물 특성 (규모/종류) 보고',
+      '사격 결과 관측 및 수정 지시'
+    ],
+    systemPrompt: `You are THUNDER-1, an artillery battery commander awaiting fire direction. WWII, 1944 Normandy.
+A forward observer needs to give you: 1) target coordinates, 2) target description (size/type), 3) fire adjustment after first salvo.
+
+Rules:
+- Military artillery procedure language. Short, precise. Max 2 sentences.
+- ALL responses MUST be in ENGLISH only.
+- Acknowledge grid references and data as received. Ask for next piece systematically.
+- When you have all 3 and observer confirms mission complete, end with: "FIRE MISSION COMPLETE. WELL DONE OBSERVER. OUT."
+- Keep messages under 25 words.
+- RESPONSE FORMAT: just the message, no quotes.`
+  },
+  {
+    id: 'spy',
+    icon: '🕵️',
+    title: '적진 침투 보고',
+    callsign: 'NIGHTSHADE',
+    desc: '적지에 침투한 첩보원입니다. 런던 본부에 작전 현황, 목표물 위치, 탈출 루트를 타전해야 합니다.',
+    objectives: [
+      '목표물 위치 파악 여부 확인',
+      '현재 작전 상황 및 노출 위험도 보고',
+      '탈출 루트 및 픽업 지점 전달'
+    ],
+    systemPrompt: `You are NIGHTSHADE, an SOE handler in London. WWII 1943. A field agent has infiltrated enemy territory and is sending intel via morse code.
+You need: 1) target location confirmed, 2) operational status and exposure risk, 3) exfiltration route and pickup point.
+
+Rules:
+- Terse, coded spy-radio style. Professional but tense. Max 2 sentences.
+- ALL responses MUST be in ENGLISH only.
+- Acknowledge each piece, show urgency about transmission security.
+- Occasionally remind agent to keep it brief (security).
+- When all 3 objectives received clearly, close: "UNDERSTOOD. EXTRACTION ARRANGED. GO DARK. MISSION COMPLETE."
+- Keep messages under 25 words.
+- RESPONSE FORMAT: just the message, no quotes.`
+  }
+];
+
+// ── State ────────────────────────────────────────────────
+let scState = {
+  apiKey: '',
+  selectedScenario: null,
+  selectedIdx: -1,
+  phase: 'apikey',      // apikey | select | comms
+  conversationHistory: [],
+  currentMorse: '',
+  keyDown: false,
+  keyDownTime: null,
+  dotThreshold: 200,
+  wordTimerHandle: null,
+  wordTimerDelay: 800,  // ms silence → confirm letter
+  completedChars: [],   // confirmed chars in current word
+  completedWords: [],   // confirmed words in sentence
+  lastAiMorse: '',
+  lastAiText: '',
+  missionProgress: 0,
+  missionDone: false,
+  waiting: false        // waiting for AI response
+};
+
+// ── Navigation init ──────────────────────────────────────
+function scInit() {
+  if (scState.apiKey) {
+    showScStep('select');
+    buildScenarioCards();
+  } else {
+    showScStep('apikey');
+  }
+}
+
+function showScStep(step) {
+  document.getElementById('sc-step-apikey').classList.add('hidden');
+  document.getElementById('sc-step-select').classList.add('hidden');
+  document.getElementById('sc-step-comms').classList.add('hidden');
+  document.getElementById('sc-step-' + step).classList.remove('hidden');
+  scState.phase = step;
+}
+
+// ── API Key ──────────────────────────────────────────────
+function scSaveApiKey() {
+  const key = document.getElementById('scApiKey').value.trim();
+  if (!key || !key.startsWith('AI')) {
+    alert('유효한 API 키를 입력하세요 (AIza... 형식)');
+    return;
+  }
+  scState.apiKey = key;
+  showScStep('select');
+  buildScenarioCards();
+}
+
+function scChangeApiKey() {
+  scState.apiKey = '';
+  document.getElementById('scApiKey').value = '';
+  showScStep('apikey');
+}
+
+// ── Scenario select ──────────────────────────────────────
+function buildScenarioCards() {
+  const container = document.getElementById('scCards');
+  container.innerHTML = '';
+  SCENARIOS.forEach((sc, i) => {
+    const card = document.createElement('div');
+    card.className = 'scenario-card';
+    card.id = 'sc-card-' + i;
+    card.innerHTML = `
+      <div class="sc-icon">${sc.icon}</div>
+      <div class="sc-title">${sc.title}</div>
+      <div class="sc-desc">${sc.desc}</div>
+      <div class="sc-obj">목표: ${sc.objectives.join(' / ')}</div>
+    `;
+    card.onclick = () => selectScenario(i);
+    container.appendChild(card);
+  });
+}
+
+function selectScenario(idx) {
+  document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('sc-card-' + idx).classList.add('selected');
+  scState.selectedIdx = idx;
+  scState.selectedScenario = SCENARIOS[idx];
+  document.getElementById('scStartBtn').disabled = false;
+}
+
+// ── Mission begin ─────────────────────────────────────────
+async function scBeginMission() {
+  const sc = scState.selectedScenario;
+  if (!sc) return;
+
+  // Reset state
+  scState.conversationHistory = [];
+  scState.completedChars = [];
+  scState.completedWords = [];
+  scState.currentMorse = '';
+  scState.missionProgress = 0;
+  scState.missionDone = false;
+  scState.waiting = false;
+  scState.lastAiMorse = '';
+  scState.lastAiText = '';
+
+  // UI setup
+  document.getElementById('scCallsign').textContent = sc.callsign;
+  document.getElementById('scMissionTitle').textContent = sc.title.toUpperCase();
+  buildObjectives();
+  setProgress(0);
+  clearMsgLog();
+  scAddMsg('system', null, '암호 통신 개시. 교신 대기 중...');
+  clearTxUI();
+  document.getElementById('scSendBtn').disabled = true;
+
+  showScStep('comms');
+
+  // First AI message
+  scSetStatus('수신 중', 'amber');
+  await scGetAiResponse(null);
+}
+
+function scBeginMissionAgain() {
+  closeMissionOverlay();
+  if (scState.selectedScenario) {
+    showScStep('select');
+    setTimeout(() => scBeginMission(), 100);
+  }
+}
+
+// ── Objectives UI ─────────────────────────────────────────
+function buildObjectives() {
+  const sc = scState.selectedScenario;
+  const el = document.getElementById('scObjectives');
+  el.innerHTML = '<div style="font-size:0.65rem;letter-spacing:0.15em;margin-bottom:6px;color:rgba(255,179,0,0.6);">▸ 임무 목표</div>' +
+    sc.objectives.map((obj, i) =>
+      `<div class="obj-item" id="obj-${i}">
+        <span class="obj-pending" id="obj-icon-${i}">○</span>
+        <span id="obj-text-${i}">${obj}</span>
+      </div>`
+    ).join('');
+}
+
+function completeObjective(idx) {
+  const icon = document.getElementById('obj-icon-' + idx);
+  if (icon && !icon.classList.contains('obj-check')) {
+    icon.className = 'obj-check';
+    icon.textContent = '✓';
+    document.getElementById('obj-text-' + idx).style.color = 'var(--green)';
+  }
+}
+
+function setProgress(pct) {
+  scState.missionProgress = pct;
+  document.getElementById('scProgressBar').style.width = pct + '%';
+  document.getElementById('scProgressPct').textContent = pct + '%';
+}
+
+// ── Status dot ────────────────────────────────────────────
+function scSetStatus(text, color) {
+  document.getElementById('scStatusText').textContent = text;
+  const dot = document.getElementById('scStatusDot');
+  dot.className = 'status-dot' + (color ? ' ' + color : '');
+}
+
+// ── Message log ───────────────────────────────────────────
+function clearMsgLog() {
+  document.getElementById('scMsgLog').innerHTML = '';
+}
+
+function scAddMsg(type, morseStr, text) {
+  const log = document.getElementById('scMsgLog');
+  const entry = document.createElement('div');
+  entry.className = 'msg-entry ' + type;
+
+  let metaText = '';
+  if (type === 'incoming') metaText = '▸ 수신 — ' + (scState.selectedScenario?.callsign || 'COMMAND');
+  if (type === 'outgoing') metaText = '▸ 송신 — YOU';
+  if (type === 'system')   metaText = 'SYSTEM';
+
+  entry.innerHTML = `
+    <div class="msg-meta">${metaText}</div>
+    <div>${text}</div>
+    ${morseStr ? `<div class="msg-morse">${morseStr}</div>` : ''}
+  `;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+}
+
+// ── Gemini API call ───────────────────────────────────────
+async function scGetAiResponse(playerMessage) {
+  scState.waiting = true;
+  scSetStatus('교신 중', 'amber');
+  document.getElementById('scSendBtn').disabled = true;
+  document.getElementById('scRcvStatus').innerHTML = '<span class="rcv-waiting thinking-dots">수신 대기 중</span>';
+
+  // Build messages
+  if (playerMessage) {
+    scState.conversationHistory.push({
+      role: 'user',
+      parts: [{ text: playerMessage }]
+    });
+  }
+
+  const payload = {
+    system_instruction: { parts: [{ text: scState.selectedScenario.systemPrompt }] },
+    contents: scState.conversationHistory.length > 0
+      ? scState.conversationHistory
+      : [{ role: 'user', parts: [{ text: '[BEGIN TRANSMISSION - Make first contact]' }] }]
+  };
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${scState.apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || 'API 오류 ' + res.status);
+    }
+
+    const data = await res.json();
+    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '...';
+
+    // Add to history
+    scState.conversationHistory.push({
+      role: 'model',
+      parts: [{ text: aiText }]
+    });
+
+    scState.lastAiText = aiText;
+
+    // Detect mission complete
+    const missionComplete = aiText.toUpperCase().includes('MISSION COMPLETE') ||
+                            aiText.toUpperCase().includes('OUT.') && aiText.toUpperCase().includes('COMPLETE');
+
+    // Update objectives progress heuristically
+    updateObjectiveProgress(aiText, playerMessage);
+
+    // Convert to morse and play
+    await scPlayAiMorse(aiText, missionComplete);
+
+  } catch(e) {
+    scState.waiting = false;
+    scSetStatus('오류', 'red');
+    scAddMsg('system', null, '⚠ 오류: ' + e.message);
+    document.getElementById('scRcvStatus').textContent = '연결 오류';
+    if (!scState.missionDone) {
+      document.getElementById('scSendBtn').disabled = false;
+    }
+  }
+}
+
+// ── Heuristic objective tracking ─────────────────────────
+function updateObjectiveProgress(aiText, playerMsg) {
+  const sc = scState.selectedScenario;
+  const combined = ((aiText || '') + ' ' + (playerMsg || '')).toUpperCase();
+  const total = sc.objectives.length;
+  let done = 0;
+
+  // Simple keyword heuristic per scenario
+  const keywords = [
+    ['TRENCH','ENEMY','POSITION','OBSERVATION','SPOTTED','REPORT','RECON',
+     'COORDINATE','GRID','LOCATION','TARGET','TRANSMISSION','CONFIRM'],
+    ['SUPPLY','AMMO','FOOD','RATION','STOCK','RESOURCE','FUEL','EQUIPMENT',
+     'SURVIVOR','CASUALT','WOUND','RESCUE','SHIP','VESSEL'],
+    ['READY','CONTINUE','SUSTAIN','COMBAT','FIGHT','PROCEED','EXTRACT',
+     'FIRE','SHOOT','ADJUST','SALVO','RESULT','DAMAGE','EFFECT']
+  ];
+
+  // Count how many distinct keyword groups appear
+  const seen = keywords.map(group =>
+    group.some(kw => combined.includes(kw))
+  );
+  done = Math.min(seen.filter(Boolean).length, total);
+
+  // Also check if AI acknowledged things
+  if (aiText && (aiText.includes('RECEIVED') || aiText.includes('ROGER') ||
+                  aiText.includes('COPY') || aiText.includes('UNDERSTOOD') ||
+                  aiText.includes('CONFIRMED'))) {
+    done = Math.min(done + 1, total);
+  }
+
+  // Update UI
+  for(let i=0; i<total; i++) {
+    if(i < done) completeObjective(i);
+  }
+
+  const pct = Math.round((done / total) * 90);
+  if (pct > scState.missionProgress) setProgress(pct);
+}
+
+// ── Text → Morse string (with word spaces) ───────────────
+function textToMorseStr(text) {
+  return text.toUpperCase().split('').map(ch => {
+    if (ch === ' ') return '   ';   // word gap
+    if (MORSE[ch])  return MORSE[ch] + ' ';
+    return '';
+  }).join('').trim();
+}
+
+// ── Play AI morse with visual + add to log ────────────────
+async function scPlayAiMorse(text, isFinal) {
+  // Build morse
+  const morseStr = textToMorseStr(text);
+  scState.lastAiMorse = morseStr;
+
+  document.getElementById('scRcvStatus').textContent = '수신 중...';
+  scSetStatus('수신 중', 'amber');
+
+  // Add to log (incoming)
+  scAddMsg('incoming', morseStr.replace(/\s+/g, ' '), text);
+
+  // Play with visual
+  const waveEl = document.getElementById('scSignalWave');
+  const totalMs = await playMorseWithVisualAsync(morseStr, waveEl, 0.9);
+
+  // After playback
+  await delay(300);
+  document.getElementById('scRcvStatus').textContent = '수신 완료 — 응신하세요';
+  scState.waiting = false;
+  scSetStatus('교신 가능', 'green');
+
+  if (isFinal) {
+    // Mission complete
+    setProgress(100);
+    scState.missionProgress = 100;
+    scState.missionDone = true;
+    for(let i=0; i<scState.selectedScenario.objectives.length; i++) completeObjective(i);
+    setTimeout(() => showMissionComplete(), 1500);
+  } else {
+    // Enable transmit
+    document.getElementById('scSendBtn').disabled = false;
+    document.getElementById('scSendBtn').focus();
+  }
+}
+
+// Async version of playMorseWithVisual
+function playMorseWithVisualAsync(morseStr, container, speed) {
+  return new Promise(resolve => {
+    container.innerHTML = '';
+    const segs = [];
+    for (let ch of morseStr) {
+      if (ch === '.' || ch === '-') segs.push(ch);
+    }
+    segs.forEach(s => {
+      const el = document.createElement('div');
+      el.className = s === '.' ? 'sw-dot' : 'sw-dash';
+      container.appendChild(el);
+    });
+
+    const dot  = 90 / speed;
+    const dash = dot * 3;
+    const gap  = dot;
+
+    let t = 0;
+    let si = 0;
+    for (let ch of morseStr) {
+      if (ch === '.' || ch === '-') {
+        const idx = si;
+        const dur = ch === '.' ? dot : dash;
+        setTimeout(() => {
+          const el = container.children[idx];
+          if (el) {
+            el.classList.add('on');
+            if (ch === '.') beep(dot / 1000, 700);
+            else            beep(dash / 1000, 700);
+            setTimeout(() => el.classList.remove('on'), dur);
+          }
+        }, t);
+        t += dur + gap;
+        si++;
+      } else if (ch === ' ') {
+        t += gap * 2;
+      }
+    }
+    const total = t + 400;
+    setTimeout(() => resolve(total), total);
+  });
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── Replay last AI signal ─────────────────────────────────
+function scReplayLast() {
+  if (!scState.lastAiMorse) return;
+  const waveEl = document.getElementById('scSignalWave');
+  playMorseWithVisualAsync(scState.lastAiMorse, waveEl, 0.9);
+}
+
+// ── Transmit: key press handling ──────────────────────────
+function scKeyDown() {
+  if (scState.waiting || scState.missionDone) return;
+  if (scState.keyDown) return;
+  scState.keyDown = true;
+  scState.keyDownTime = Date.now();
+  document.getElementById('scKeyBtn').classList.add('active');
+
+  // Cancel word timer
+  if (scState.wordTimerHandle) {
+    clearTimeout(scState.wordTimerHandle);
+    scState.wordTimerHandle = null;
+  }
+  document.getElementById('scWordTimer').textContent = '';
+  keyToneStart();
+}
+
+function scKeyUp() {
+  if (!scState.keyDown) return;
+  scState.keyDown = false;
+  keyToneStop();
+  document.getElementById('scKeyBtn').classList.remove('active');
+
+  const dur = Date.now() - scState.keyDownTime;
+  const sym = dur < scState.dotThreshold ? '.' : '-';
+  scState.currentMorse += sym;
+  document.getElementById('scTxMorse').textContent = scState.currentMorse || '—';
+
+  // Attempt decode of current morse sequence
+  const decoded = MORSE_REV[scState.currentMorse];
+  if (decoded) {
+    document.getElementById('scTxMorse').style.color = 'var(--green)';
+  } else {
+    document.getElementById('scTxMorse').style.color = 'rgba(57,255,90,0.5)';
+  }
+
+  // Start letter-confirm timer
+  scStartWordTimer();
+
+  // Enable send if we have content
+  const totalWords = scState.completedWords;
+  const totalChars = scState.completedChars;
+  if (totalWords.length > 0 || totalChars.length > 0 || scState.currentMorse) {
+    document.getElementById('scSendBtn').disabled = false;
+  }
+}
+
+function scStartWordTimer() {
+  if (scState.wordTimerHandle) clearTimeout(scState.wordTimerHandle);
+
+  let countdown = Math.ceil(scState.wordTimerDelay / 100);
+  const el = document.getElementById('scWordTimer');
+
+  const tick = setInterval(() => {
+    countdown--;
+    if (countdown <= 0) {
+      clearInterval(tick);
+      el.textContent = '';
+    } else {
+      el.textContent = '확정까지 ' + (countdown * 0.1).toFixed(1) + 's';
+    }
+  }, 100);
+
+  scState.wordTimerHandle = setTimeout(() => {
+    clearInterval(tick);
+    el.textContent = '';
+    scConfirmLetter();
+  }, scState.wordTimerDelay);
+}
+
+function scConfirmLetter() {
+  if (!scState.currentMorse) return;
+  const decoded = MORSE_REV[scState.currentMorse] || '?';
+  scState.completedChars.push({ morse: scState.currentMorse, char: decoded });
+  scState.currentMorse = '';
+
+  document.getElementById('scTxMorse').textContent = '—';
+  document.getElementById('scTxMorse').style.color = 'var(--green)';
+  renderWordBuffer();
+  document.getElementById('scSendBtn').disabled = false;
+}
+
+function renderWordBuffer() {
+  const buf = document.getElementById('scWordBuffer');
+  // Build: completed words + current word chars
+  const wordParts = scState.completedWords.map(w =>
+    `<span class="wb-char">${w}</span><span style="color:var(--text-dim);font-family:'Share Tech Mono';padding:0 4px;">·</span>`
+  ).join('');
+  const charParts = scState.completedChars.map(c =>
+    `<span class="wb-char">${c.char}</span>`
+  ).join('');
+  buf.innerHTML = wordParts + charParts;
+
+  // Full sentence preview
+  const sentence = buildSentence();
+  document.getElementById('scTxSentence').textContent = sentence ? '→ ' + sentence : '';
+}
+
+function buildSentence() {
+  const words = [...scState.completedWords];
+  const currentWord = scState.completedChars.map(c => c.char).join('');
+  if (currentWord) words.push(currentWord);
+  return words.join(' ');
+}
+
+// ── Word boundary: double-tap or Enter ────────────────────
+// Space to confirm word boundary handled by long pause
+// We also confirm current word on Enter before sending
+function scConfirmWord() {
+  // Confirm any pending letter
+  if (scState.currentMorse) {
+    const decoded = MORSE_REV[scState.currentMorse] || '?';
+    scState.completedChars.push({ morse: scState.currentMorse, char: decoded });
+    scState.currentMorse = '';
+  }
+  // Move chars to word
+  if (scState.completedChars.length > 0) {
+    const word = scState.completedChars.map(c => c.char).join('');
+    scState.completedWords.push(word);
+    scState.completedChars = [];
+    renderWordBuffer();
+  }
+}
+
+// ── Send message ──────────────────────────────────────────
+async function scSendMessage() {
+  if (scState.waiting || scState.missionDone) return;
+
+  // Cancel timers
+  if (scState.wordTimerHandle) {
+    clearTimeout(scState.wordTimerHandle);
+    scState.wordTimerHandle = null;
+  }
+
+  scConfirmWord();
+
+  const sentence = buildSentence();
+  if (!sentence || sentence.replace(/[?\s]/g,'').length === 0) return;
+
+  // Build morse representation of what was sent
+  const sentMorse = sentence.split('').map(ch => {
+    if (ch === ' ') return '   ';
+    if (MORSE[ch])  return MORSE[ch] + ' ';
+    return '';
+  }).join('').trim();
+
+  // Add to log
+  scAddMsg('outgoing', sentMorse, sentence);
+
+  // Reset TX UI
+  scState.completedWords = [];
+  scState.completedChars = [];
+  scState.currentMorse   = '';
+  clearTxUI();
+  document.getElementById('scSendBtn').disabled = true;
+
+  // Get AI response
+  await scGetAiResponse(sentence);
+}
+
+function scClearTx() {
+  if (scState.wordTimerHandle) {
+    clearTimeout(scState.wordTimerHandle);
+    scState.wordTimerHandle = null;
+  }
+  scState.currentMorse   = '';
+  scState.completedChars = [];
+  scState.completedWords = [];
+  clearTxUI();
+  document.getElementById('scSendBtn').disabled = true;
+}
+
+function clearTxUI() {
+  document.getElementById('scTxMorse').textContent  = '—';
+  document.getElementById('scTxMorse').style.color  = 'var(--green)';
+  document.getElementById('scWordBuffer').innerHTML = '';
+  document.getElementById('scTxSentence').textContent = '';
+  document.getElementById('scWordTimer').textContent  = '';
+}
+
+// ── Abort ─────────────────────────────────────────────────
+function scAbortMission() {
+  if (!confirm('작전을 중단하시겠습니까?')) return;
+  scState.missionDone = true;
+  showScStep('select');
+}
+
+// ── Mission complete UI ───────────────────────────────────
+function showMissionComplete() {
+  const sc = scState.selectedScenario;
+  const totalMsgs = scState.conversationHistory.filter(m => m.role === 'user').length;
+
+  let grade, gradeClass;
+  if (totalMsgs <= 4)      { grade = 'S'; gradeClass = 'grade-S'; }
+  else if (totalMsgs <= 7) { grade = 'A'; gradeClass = 'grade-A'; }
+  else if (totalMsgs <= 10){ grade = 'B'; gradeClass = 'grade-B'; }
+  else                      { grade = 'C'; gradeClass = 'grade-C'; }
+
+  document.getElementById('missionOverlayTitle').textContent = '임무 완료 — ' + sc.title;
+  document.getElementById('missionGrade').innerHTML =
+    `<span class="${gradeClass}">${grade}</span>`;
+  document.getElementById('missionOverlaySub').innerHTML =
+    `교신 횟수: ${totalMsgs}회 &nbsp;|&nbsp; 등급: ${grade}<br>` +
+    (grade === 'S' ? '완벽한 교신. 최소한의 송신으로 임무 완수!' :
+     grade === 'A' ? '우수한 교신. 간결하고 효과적인 보고였습니다.' :
+     grade === 'B' ? '양호한 교신. 더 간결하게 보고하는 연습을 하세요.' :
+     '임무는 완수했으나 교신이 다소 길었습니다.');
+
+  document.getElementById('missionOverlay').classList.add('show');
+}
+
+function closeMissionOverlay() {
+  document.getElementById('missionOverlay').classList.remove('show');
+  showScStep('select');
+}
+
+// ── Keyboard handler integration ─────────────────────────
+// (merged into existing keydown/keyup listeners below)
+
+// showScreen hook handled in main showScreen function
+
 </script>
+
+<!-- Mission Complete Overlay -->
+<div class="mission-overlay" id="missionOverlay">
+  <div class="mission-box">
+    <div class="mission-title" id="missionOverlayTitle">임무 완료</div>
+    <div class="mission-grade" id="missionGrade">A</div>
+    <div style="font-family:'Share Tech Mono';font-size:0.8rem;color:var(--text-dim);letter-spacing:0.1em;line-height:1.8;margin-bottom:20px;" id="missionOverlaySub"></div>
+    <div class="btn-row" style="justify-content:center;gap:12px;">
+      <button class="btn btn-primary" onclick="closeMissionOverlay()">귀환</button>
+      <button class="btn btn-amber" onclick="scBeginMissionAgain()">재시도</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
