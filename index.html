@@ -1,0 +1,2037 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIGNAL — 모스부호 훈련소</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Noto+Sans+KR:wght@300;400;700&display=swap');
+
+  :root {
+    --bg: #0a0e0a;
+    --bg2: #0f1510;
+    --panel: #111a11;
+    --panel2: #162016;
+    --green: #39ff5a;
+    --green2: #1aff3a;
+    --green-dim: #1a5c28;
+    --green-glow: rgba(57,255,90,0.15);
+    --amber: #ffb300;
+    --amber-dim: #7a5600;
+    --red: #ff3a3a;
+    --text: #c8f0c8;
+    --text-dim: #4a7a4a;
+    --border: #1e3a1e;
+    --border2: #2a4a2a;
+    --scanline: rgba(0,0,0,0.08);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* CRT scanline overlay */
+  body::before {
+    content:'';
+    position:fixed;
+    inset:0;
+    background: repeating-linear-gradient(
+      0deg,
+      var(--scanline) 0px,
+      var(--scanline) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events:none;
+    z-index:9999;
+  }
+
+  /* Noise texture */
+  body::after {
+    content:'';
+    position:fixed;
+    inset:0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events:none;
+    z-index:9998;
+    opacity:0.4;
+  }
+
+  /* ─────────── HEADER ─────────── */
+  header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:16px 32px;
+    border-bottom:1px solid var(--border2);
+    background: linear-gradient(180deg, rgba(57,255,90,0.04) 0%, transparent 100%);
+    position:relative;
+  }
+
+  .logo {
+    font-family:'Orbitron', monospace;
+    font-size:1.8rem;
+    font-weight:900;
+    letter-spacing:0.3em;
+    color: var(--green);
+    text-shadow: 0 0 20px var(--green), 0 0 60px rgba(57,255,90,0.3);
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%,100% { text-shadow: 0 0 20px var(--green), 0 0 60px rgba(57,255,90,0.3); }
+    50% { text-shadow: 0 0 30px var(--green), 0 0 90px rgba(57,255,90,0.5), 0 0 120px rgba(57,255,90,0.2); }
+  }
+
+  .logo-sub {
+    font-family:'Share Tech Mono', monospace;
+    font-size:0.65rem;
+    color: var(--text-dim);
+    letter-spacing:0.2em;
+    margin-top:2px;
+  }
+
+  .header-stats {
+    display:flex;
+    gap:24px;
+    font-family:'Share Tech Mono', monospace;
+    font-size:0.8rem;
+    color: var(--text-dim);
+  }
+
+  .stat-item { display:flex; flex-direction:column; align-items:flex-end; }
+  .stat-val { color:var(--green); font-size:1.1rem; font-weight:700; }
+
+  /* ─────────── MAIN LAYOUT ─────────── */
+  .main-container {
+    display:grid;
+    grid-template-columns:220px 1fr;
+    min-height: calc(100vh - 73px);
+  }
+
+  /* ─────────── SIDEBAR ─────────── */
+  .sidebar {
+    border-right:1px solid var(--border2);
+    padding:20px 12px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    background: linear-gradient(180deg, var(--panel) 0%, var(--bg2) 100%);
+  }
+
+  .sidebar-label {
+    font-family:'Share Tech Mono', monospace;
+    font-size:0.6rem;
+    color:var(--text-dim);
+    letter-spacing:0.25em;
+    padding:0 8px;
+    margin-top:8px;
+  }
+
+  .nav-btn {
+    background: transparent;
+    border:1px solid var(--border);
+    color: var(--text-dim);
+    padding:12px 14px;
+    border-radius:6px;
+    cursor:pointer;
+    font-family:'Noto Sans KR', sans-serif;
+    font-size:0.85rem;
+    text-align:left;
+    transition: all 0.2s;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .nav-btn::before {
+    content:'';
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:3px;
+    background:var(--green);
+    transform:scaleY(0);
+    transition:transform 0.2s;
+  }
+
+  .nav-btn:hover, .nav-btn.active {
+    border-color:var(--green-dim);
+    color:var(--green);
+    background: var(--green-glow);
+  }
+
+  .nav-btn.active::before { transform:scaleY(1); }
+
+  .nav-icon { font-size:1.1rem; margin-right:8px; }
+
+  .difficulty-section { margin-top:auto; }
+
+  .diff-label {
+    font-family:'Share Tech Mono', monospace;
+    font-size:0.6rem;
+    color:var(--text-dim);
+    letter-spacing:0.25em;
+    padding:0 8px;
+    margin-bottom:8px;
+  }
+
+  .diff-btns { display:flex; gap:6px; padding:0 8px; }
+
+  .diff-btn {
+    flex:1;
+    padding:8px 4px;
+    border-radius:4px;
+    border:1px solid var(--border);
+    background:transparent;
+    color:var(--text-dim);
+    font-family:'Share Tech Mono', monospace;
+    font-size:0.7rem;
+    cursor:pointer;
+    transition:all 0.2s;
+    text-align:center;
+  }
+
+  .diff-btn:hover { border-color:var(--amber-dim); color:var(--amber); }
+  .diff-btn.active-easy { border-color:#39ff5a; color:#39ff5a; background:rgba(57,255,90,0.1); }
+  .diff-btn.active-mid  { border-color:var(--amber); color:var(--amber); background:rgba(255,179,0,0.1); }
+  .diff-btn.active-hard { border-color:var(--red); color:var(--red); background:rgba(255,58,58,0.1); }
+
+  /* ─────────── CONTENT AREA ─────────── */
+  .content {
+    padding:28px 36px;
+    overflow-y:auto;
+  }
+
+  .screen { display:none; animation:fadeIn 0.35s ease; }
+  .screen.active { display:block; }
+
+  @keyframes fadeIn {
+    from { opacity:0; transform:translateY(8px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  /* ─────────── TITLES ─────────── */
+  .screen-title {
+    font-family:'Orbitron', monospace;
+    font-size:1.1rem;
+    letter-spacing:0.15em;
+    color:var(--green);
+    margin-bottom:6px;
+  }
+
+  .screen-desc {
+    font-size:0.82rem;
+    color:var(--text-dim);
+    font-family:'Share Tech Mono', monospace;
+    margin-bottom:24px;
+    letter-spacing:0.05em;
+  }
+
+  /* ─────────── MORSE DISPLAY ─────────── */
+  .morse-display {
+    background: var(--panel);
+    border:1px solid var(--border2);
+    border-radius:12px;
+    padding:28px;
+    margin-bottom:20px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .morse-display::before {
+    content:'';
+    position:absolute;
+    inset:0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(57,255,90,0.06) 0%, transparent 60%);
+  }
+
+  .target-char {
+    font-family:'Orbitron', monospace;
+    font-size:5rem;
+    font-weight:900;
+    color:var(--green);
+    text-align:center;
+    text-shadow: 0 0 40px var(--green), 0 0 80px rgba(57,255,90,0.3);
+    line-height:1;
+    margin-bottom:8px;
+  }
+
+  .target-morse {
+    font-family:'Share Tech Mono', monospace;
+    font-size:1.6rem;
+    color:var(--text-dim);
+    text-align:center;
+    letter-spacing:0.3em;
+    min-height:2.2rem;
+    transition: color 0.3s;
+  }
+
+  .target-morse.revealed { color:var(--amber); }
+
+  /* ─────────── SIGNAL BAR ─────────── */
+  .signal-container {
+    display:flex;
+    gap:8px;
+    align-items:center;
+    justify-content:center;
+    margin:16px 0;
+    flex-wrap:wrap;
+  }
+
+  .signal-dot {
+    width:20px; height:20px;
+    border-radius:50%;
+    background:var(--green);
+    box-shadow: 0 0 12px var(--green), 0 0 24px rgba(57,255,90,0.5);
+    opacity:0;
+    transition: opacity 0.05s;
+  }
+
+  .signal-dash {
+    width:60px; height:20px;
+    border-radius:10px;
+    background:var(--green);
+    box-shadow: 0 0 12px var(--green), 0 0 24px rgba(57,255,90,0.5);
+    opacity:0;
+    transition: opacity 0.05s;
+  }
+
+  .signal-dot.lit, .signal-dash.lit { opacity:1; }
+
+  /* ─────────── INPUT AREA ─────────── */
+  .input-area {
+    display:flex;
+    gap:12px;
+    margin-bottom:20px;
+    align-items:center;
+  }
+
+  .answer-input {
+    flex:1;
+    background: var(--panel);
+    border:1px solid var(--border2);
+    border-radius:8px;
+    padding:14px 20px;
+    font-family:'Orbitron', monospace;
+    font-size:1.4rem;
+    color:var(--green);
+    outline:none;
+    letter-spacing:0.2em;
+    transition: border-color 0.2s;
+    text-transform:uppercase;
+  }
+
+  .answer-input:focus { border-color:var(--green-dim); box-shadow:0 0 20px var(--green-glow); }
+  .answer-input.correct { border-color:var(--green); animation:flash-green 0.4s; }
+  .answer-input.wrong   { border-color:var(--red); animation:flash-red 0.4s; }
+
+  @keyframes flash-green {
+    0%,100% { box-shadow:0 0 0 rgba(57,255,90,0); }
+    50% { box-shadow:0 0 30px rgba(57,255,90,0.6); }
+  }
+
+  @keyframes flash-red {
+    0%,100% { box-shadow:0 0 0 rgba(255,58,58,0); }
+    50% { box-shadow:0 0 30px rgba(255,58,58,0.6); }
+  }
+
+  /* ─────────── BUTTONS ─────────── */
+  .btn {
+    padding:12px 24px;
+    border-radius:8px;
+    border:1px solid var(--green-dim);
+    background: transparent;
+    color:var(--green);
+    font-family:'Orbitron', monospace;
+    font-size:0.75rem;
+    letter-spacing:0.1em;
+    cursor:pointer;
+    transition:all 0.2s;
+    white-space:nowrap;
+  }
+
+  .btn:hover {
+    background:var(--green-glow);
+    box-shadow:0 0 20px var(--green-glow);
+    border-color:var(--green);
+  }
+
+  .btn-primary {
+    background:var(--green);
+    color:var(--bg);
+    font-weight:700;
+    box-shadow:0 0 20px rgba(57,255,90,0.3);
+  }
+
+  .btn-primary:hover {
+    background:var(--green2);
+    box-shadow:0 0 30px rgba(57,255,90,0.5);
+    color:var(--bg);
+  }
+
+  .btn-amber { border-color:var(--amber-dim); color:var(--amber); }
+  .btn-amber:hover { border-color:var(--amber); background:rgba(255,179,0,0.1); }
+
+  .btn-row { display:flex; gap:10px; flex-wrap:wrap; }
+
+  /* ─────────── FEEDBACK ─────────── */
+  .feedback {
+    height:28px;
+    font-family:'Share Tech Mono', monospace;
+    font-size:0.9rem;
+    letter-spacing:0.1em;
+    text-align:center;
+    transition:all 0.3s;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+
+  .feedback.ok  { color:var(--green); }
+  .feedback.err { color:var(--red); }
+  .feedback.info{ color:var(--amber); }
+
+  /* ─────────── PROGRESS ─────────── */
+  .progress-bar-wrap {
+    background:var(--panel);
+    border-radius:4px;
+    height:6px;
+    overflow:hidden;
+    margin-bottom:20px;
+    border:1px solid var(--border);
+  }
+
+  .progress-bar-fill {
+    height:100%;
+    background: linear-gradient(90deg, var(--green-dim), var(--green));
+    border-radius:4px;
+    transition:width 0.4s ease;
+    box-shadow:0 0 10px rgba(57,255,90,0.4);
+  }
+
+  /* ─────────── TRANSMIT MODE ─────────── */
+  .key-area {
+    background:var(--panel);
+    border:1px solid var(--border2);
+    border-radius:12px;
+    padding:28px;
+    margin-bottom:20px;
+    text-align:center;
+    position:relative;
+    user-select:none;
+  }
+
+  .key-btn {
+    display:inline-block;
+    background:var(--panel2);
+    border:2px solid var(--border2);
+    border-radius:12px;
+    padding:20px 40px;
+    font-family:'Orbitron', monospace;
+    font-size:0.75rem;
+    letter-spacing:0.15em;
+    color:var(--text-dim);
+    cursor:pointer;
+    transition:all 0.05s;
+    margin:8px;
+    box-shadow: 0 6px 0 #060a06, 0 8px 15px rgba(0,0,0,0.4);
+    -webkit-user-select:none;
+    user-select:none;
+  }
+
+  .key-btn.active, .key-btn:active {
+    transform:translateY(3px);
+    box-shadow: 0 3px 0 #060a06, 0 4px 8px rgba(0,0,0,0.4);
+    border-color:var(--green);
+    color:var(--green);
+    background: var(--green-glow);
+    box-shadow: 0 3px 0 #060a06, 0 0 20px var(--green-glow);
+  }
+
+  .input-morse-display {
+    font-family:'Share Tech Mono', monospace;
+    font-size:2rem;
+    color:var(--green);
+    letter-spacing:0.4em;
+    min-height:3rem;
+    padding:12px;
+    text-shadow:0 0 10px rgba(57,255,90,0.5);
+  }
+
+  .input-decoded {
+    font-family:'Share Tech Mono', monospace;
+    font-size:1rem;
+    color:var(--text-dim);
+    letter-spacing:0.2em;
+    min-height:1.5rem;
+  }
+
+  .timer-bar-wrap {
+    background:var(--panel);
+    border-radius:4px;
+    height:8px;
+    overflow:hidden;
+    margin:12px 0;
+    border:1px solid var(--border);
+  }
+
+  .timer-bar-fill {
+    height:100%;
+    background: linear-gradient(90deg, var(--red), var(--amber));
+    border-radius:4px;
+    transition:width 0.1s linear;
+    box-shadow:0 0 10px rgba(255,100,0,0.4);
+  }
+
+  /* ─────────── REFERENCE TABLE ─────────── */
+  .ref-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));
+    gap:8px;
+    margin-bottom:24px;
+  }
+
+  .ref-card {
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px;
+    text-align:center;
+    cursor:pointer;
+    transition:all 0.2s;
+  }
+
+  .ref-card:hover {
+    border-color:var(--green-dim);
+    background:var(--green-glow);
+    transform:translateY(-2px);
+  }
+
+  .ref-char {
+    font-family:'Orbitron', monospace;
+    font-size:1.4rem;
+    color:var(--green);
+    font-weight:700;
+  }
+
+  .ref-morse {
+    font-family:'Share Tech Mono', monospace;
+    font-size:0.75rem;
+    color:var(--text-dim);
+    letter-spacing:0.2em;
+    margin-top:4px;
+  }
+
+  /* ─────────── SCORE / STATS ─────────── */
+  .score-panel {
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+    margin-bottom:24px;
+  }
+
+  .score-card {
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:16px;
+    text-align:center;
+  }
+
+  .score-num {
+    font-family:'Orbitron', monospace;
+    font-size:2rem;
+    font-weight:700;
+    color:var(--green);
+    text-shadow:0 0 15px rgba(57,255,90,0.4);
+  }
+
+  .score-lbl {
+    font-family:'Share Tech Mono', monospace;
+    font-size:0.65rem;
+    color:var(--text-dim);
+    letter-spacing:0.15em;
+    margin-top:4px;
+  }
+
+  /* ─────────── CHALLENGE SCREEN ─────────── */
+  .challenge-word {
+    font-family:'Orbitron', monospace;
+    font-size:3rem;
+    font-weight:900;
+    color:var(--green);
+    text-align:center;
+    letter-spacing:0.3em;
+    text-shadow:0 0 30px rgba(57,255,90,0.4);
+    margin:16px 0;
+  }
+
+  .challenge-morse {
+    font-family:'Share Tech Mono', monospace;
+    font-size:1rem;
+    color:var(--text-dim);
+    text-align:center;
+    letter-spacing:0.2em;
+    line-height:2;
+    margin-bottom:16px;
+  }
+
+  /* ─────────── WORD TRANSMIT ─────────── */
+  .word-letters {
+    display:flex;
+    gap:8px;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin:12px 0;
+  }
+
+  .word-letter {
+    width:44px; height:44px;
+    border-radius:6px;
+    border:1px solid var(--border2);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Orbitron', monospace;
+    font-size:1.1rem;
+    color:var(--text-dim);
+    transition:all 0.2s;
+    position:relative;
+  }
+
+  .word-letter.current { border-color:var(--green); color:var(--green); background:var(--green-glow); }
+  .word-letter.done    { border-color:var(--green-dim); color:var(--green); background:rgba(57,255,90,0.06); }
+  .word-letter.error   { border-color:var(--red); color:var(--red); }
+
+  /* ─────────── RESULT OVERLAY ─────────── */
+  .result-overlay {
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.8);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:100;
+    display:none;
+  }
+
+  .result-overlay.show { display:flex; animation:fadeIn 0.3s; }
+
+  .result-box {
+    background:var(--panel);
+    border:1px solid var(--green-dim);
+    border-radius:16px;
+    padding:40px 60px;
+    text-align:center;
+    box-shadow:0 0 60px rgba(57,255,90,0.15);
+    max-width:480px;
+  }
+
+  .result-title {
+    font-family:'Orbitron', monospace;
+    font-size:1.8rem;
+    color:var(--green);
+    letter-spacing:0.2em;
+    margin-bottom:8px;
+    text-shadow:0 0 20px var(--green);
+  }
+
+  .result-score {
+    font-family:'Orbitron', monospace;
+    font-size:4rem;
+    font-weight:900;
+    color:var(--green);
+    text-shadow:0 0 40px var(--green), 0 0 80px rgba(57,255,90,0.3);
+    margin:16px 0;
+  }
+
+  .result-sub {
+    font-family:'Share Tech Mono', monospace;
+    font-size:0.85rem;
+    color:var(--text-dim);
+    letter-spacing:0.1em;
+    margin-bottom:24px;
+  }
+
+  /* ─────────── SEPARATOR ─────────── */
+  .sep {
+    border:none;
+    border-top:1px solid var(--border);
+    margin:20px 0;
+  }
+
+  .section-header {
+    font-family:'Share Tech Mono', monospace;
+    font-size:0.7rem;
+    color:var(--text-dim);
+    letter-spacing:0.2em;
+    margin-bottom:12px;
+  }
+
+  /* ─────────── TOOLTIP / HINT ─────────── */
+  .hint-box {
+    background:rgba(255,179,0,0.07);
+    border:1px solid var(--amber-dim);
+    border-radius:8px;
+    padding:12px 16px;
+    font-family:'Share Tech Mono', monospace;
+    font-size:0.78rem;
+    color:var(--amber);
+    letter-spacing:0.05em;
+    line-height:1.7;
+    margin-bottom:16px;
+  }
+
+  /* Responsive */
+  @media(max-width:768px) {
+    .main-container { grid-template-columns:1fr; }
+    .sidebar { flex-direction:row; flex-wrap:wrap; border-right:none; border-bottom:1px solid var(--border2); padding:12px; }
+    .score-panel { grid-template-columns:repeat(2,1fr); }
+    .target-char { font-size:3.5rem; }
+  }
+
+  /* Flash animation for correct/wrong */
+  .flash-correct { animation:bgFlashGreen 0.5s ease; }
+  .flash-wrong   { animation:bgFlashRed   0.5s ease; }
+
+  @keyframes bgFlashGreen {
+    0%,100%{ background:var(--panel); }
+    40%{ background:rgba(57,255,90,0.12); }
+  }
+  @keyframes bgFlashRed {
+    0%,100%{ background:var(--panel); }
+    40%{ background:rgba(255,58,58,0.12); }
+  }
+
+  .hidden { display:none !important; }
+
+  /* WAVEFORM decoration */
+  .waveform {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:3px;
+    height:30px;
+    margin:8px 0;
+    opacity:0.3;
+  }
+
+  .wave-bar {
+    width:3px;
+    background:var(--green);
+    border-radius:2px;
+    animation:wavePulse 1.2s ease-in-out infinite;
+  }
+
+  @keyframes wavePulse {
+    0%,100% { transform:scaleY(0.3); }
+    50% { transform:scaleY(1); }
+  }
+
+  /* Streak display */
+  .streak-badge {
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:rgba(255,179,0,0.1);
+    border:1px solid var(--amber-dim);
+    border-radius:20px;
+    padding:4px 12px;
+    font-family:'Share Tech Mono', monospace;
+    font-size:0.8rem;
+    color:var(--amber);
+  }
+
+  .tooltip {
+    position:relative;
+    cursor:help;
+  }
+  .tooltip .tip {
+    display:none;
+    position:absolute;
+    bottom:110%;
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--panel2);
+    border:1px solid var(--border2);
+    border-radius:6px;
+    padding:6px 10px;
+    font-size:0.72rem;
+    font-family:'Share Tech Mono', monospace;
+    color:var(--text);
+    white-space:nowrap;
+    z-index:10;
+    letter-spacing:0.05em;
+  }
+  .tooltip:hover .tip { display:block; }
+
+  /* Volume indicator */
+  .vol-indicator {
+    width:8px; height:8px; border-radius:50%;
+    background:var(--green);
+    box-shadow:0 0 8px var(--green);
+    display:inline-block;
+    animation:blink 2s ease-in-out infinite;
+  }
+
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+  .welcome-grid {
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:16px;
+    margin-top:24px;
+  }
+
+  .welcome-card {
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:24px;
+    cursor:pointer;
+    transition:all 0.25s;
+    text-align:center;
+  }
+
+  .welcome-card:hover {
+    border-color:var(--green-dim);
+    background:var(--green-glow);
+    transform:translateY(-4px);
+    box-shadow:0 10px 30px rgba(0,0,0,0.3);
+  }
+
+  .welcome-card-icon { font-size:2.5rem; margin-bottom:12px; }
+  .welcome-card-title {
+    font-family:'Orbitron', monospace;
+    font-size:0.9rem;
+    color:var(--green);
+    letter-spacing:0.1em;
+    margin-bottom:6px;
+  }
+  .welcome-card-desc {
+    font-size:0.78rem;
+    color:var(--text-dim);
+    line-height:1.6;
+  }
+
+  select {
+    background:var(--panel);
+    border:1px solid var(--border2);
+    color:var(--text);
+    padding:6px 12px;
+    border-radius:6px;
+    font-family:'Share Tech Mono', monospace;
+    font-size:0.8rem;
+    cursor:pointer;
+    outline:none;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div>
+    <div class="logo">SIGNAL</div>
+    <div class="logo-sub">▸ 모스부호 훈련소 / MORSE CODE TRAINER</div>
+  </div>
+  <div class="header-stats">
+    <div class="stat-item">
+      <span class="stat-val" id="headerScore">0</span>
+      <span>총 점수</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-val" id="headerStreak">0</span>
+      <span>연속 정답</span>
+    </div>
+    <div class="stat-item">
+      <span><span class="vol-indicator"></span> LIVE</span>
+      <span style="font-size:0.65rem;">오디오 활성</span>
+    </div>
+  </div>
+</header>
+
+<!-- Main -->
+<div class="main-container">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-label">▸ 메뉴</div>
+    <button class="nav-btn active" onclick="showScreen('home')" id="nav-home">
+      <span class="nav-icon">🏠</span>홈
+    </button>
+    <button class="nav-btn" onclick="showScreen('study')" id="nav-study">
+      <span class="nav-icon">📚</span>학습하기
+    </button>
+    <button class="nav-btn" onclick="showScreen('receive')" id="nav-receive">
+      <span class="nav-icon">📡</span>수신 훈련
+    </button>
+    <button class="nav-btn" onclick="showScreen('transmit')" id="nav-transmit">
+      <span class="nav-icon">📻</span>발신 훈련
+    </button>
+    <button class="nav-btn" onclick="showScreen('word')" id="nav-word">
+      <span class="nav-icon">📝</span>단어 도전
+    </button>
+    <button class="nav-btn" onclick="showScreen('challenge')" id="nav-challenge">
+      <span class="nav-icon">⚡</span>스피드 챌린지
+    </button>
+
+    <div class="difficulty-section">
+      <div class="diff-label">▸ 난이도</div>
+      <div class="diff-btns">
+        <button class="diff-btn active-easy" onclick="setDifficulty('easy',this)">쉬움</button>
+        <button class="diff-btn" onclick="setDifficulty('mid',this)">보통</button>
+        <button class="diff-btn" onclick="setDifficulty('hard',this)">어려움</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- HOME -->
+    <div class="screen active" id="screen-home">
+      <div class="screen-title">▸ SIGNAL — 모스부호 훈련소</div>
+      <div class="screen-desc">영어 알파벳 & 숫자 모스부호를 수신/발신 모두 완벽하게 마스터하세요</div>
+
+      <div class="waveform">
+        <div class="wave-bar" style="height:8px;animation-delay:0s"></div>
+        <div class="wave-bar" style="height:16px;animation-delay:0.1s"></div>
+        <div class="wave-bar" style="height:24px;animation-delay:0.2s"></div>
+        <div class="wave-bar" style="height:14px;animation-delay:0.3s"></div>
+        <div class="wave-bar" style="height:20px;animation-delay:0.4s"></div>
+        <div class="wave-bar" style="height:10px;animation-delay:0.5s"></div>
+        <div class="wave-bar" style="height:18px;animation-delay:0.6s"></div>
+        <div class="wave-bar" style="height:26px;animation-delay:0.7s"></div>
+        <div class="wave-bar" style="height:12px;animation-delay:0.8s"></div>
+        <div class="wave-bar" style="height:22px;animation-delay:0.9s"></div>
+      </div>
+
+      <div class="welcome-grid">
+        <div class="welcome-card" onclick="showScreen('study')">
+          <div class="welcome-card-icon">📚</div>
+          <div class="welcome-card-title">학습하기</div>
+          <div class="welcome-card-desc">A~Z, 0~9 모스부호 표를 보고<br>클릭해서 소리로 확인하세요</div>
+        </div>
+        <div class="welcome-card" onclick="showScreen('receive')">
+          <div class="welcome-card-icon">📡</div>
+          <div class="welcome-card-title">수신 훈련</div>
+          <div class="welcome-card-desc">신호를 듣고 어떤 글자인지<br>맞추는 훈련입니다</div>
+        </div>
+        <div class="welcome-card" onclick="showScreen('transmit')">
+          <div class="welcome-card-icon">📻</div>
+          <div class="welcome-card-title">발신 훈련</div>
+          <div class="welcome-card-desc">스페이스바로 직접 모스부호를<br>입력하는 훈련입니다</div>
+        </div>
+        <div class="welcome-card" onclick="showScreen('challenge')">
+          <div class="welcome-card-icon">⚡</div>
+          <div class="welcome-card-title">스피드 챌린지</div>
+          <div class="welcome-card-desc">제한 시간 내에 최대한 많은<br>문제를 맞춰보세요!</div>
+        </div>
+      </div>
+
+      <hr class="sep">
+      <div class="hint-box">
+        💡 <strong>모스부호란?</strong> — 점(·)과 선(—)의 조합으로 문자를 표현하는 통신 방식입니다.<br>
+        단점(·) = 짧은 신호 &nbsp;|&nbsp; 장선(—) = 긴 신호 (3배 길이) &nbsp;|&nbsp; 글자 사이 = 3배 간격<br>
+        <strong>Tip:</strong> 참조 페이지에서 각 글자를 클릭하면 소리를 들을 수 있습니다.
+      </div>
+    </div>
+
+    <!-- STUDY -->
+    <div class="screen" id="screen-study">
+      <div class="screen-title">▸ 학습하기</div>
+      <div class="screen-desc">글자를 클릭하면 모스부호 소리를 재생합니다 — 귀로 익히세요</div>
+
+      <div class="section-header">── ALPHABET A–Z</div>
+      <div class="ref-grid" id="refAlpha"></div>
+
+      <hr class="sep">
+      <div class="section-header">── NUMBERS 0–9</div>
+      <div class="ref-grid" id="refNums"></div>
+
+      <hr class="sep">
+      <div class="hint-box">
+        💡 <strong>기억 팁:</strong> E = · (가장 짧음), T = — (선 하나), SOS = ···———··· &nbsp;|&nbsp; 숫자는 항상 5개 기호의 조합입니다.
+      </div>
+    </div>
+
+    <!-- RECEIVE -->
+    <div class="screen" id="screen-receive">
+      <div class="screen-title">▸ 수신 훈련</div>
+      <div class="screen-desc">신호를 듣고 어떤 문자인지 입력하세요</div>
+
+      <div class="score-panel">
+        <div class="score-card">
+          <div class="score-num" id="rxScore">0</div>
+          <div class="score-lbl">점수</div>
+        </div>
+        <div class="score-card">
+          <div class="score-num" id="rxStreak">0</div>
+          <div class="score-lbl">연속 정답</div>
+        </div>
+        <div class="score-card">
+          <div class="score-num" id="rxCorrect">0</div>
+          <div class="score-lbl">정답</div>
+        </div>
+        <div class="score-card">
+          <div class="score-num" id="rxWrong">0</div>
+          <div class="score-lbl">오답</div>
+        </div>
+      </div>
+
+      <div class="morse-display" id="rxDisplay">
+        <div style="text-align:center; font-family:'Share Tech Mono'; color:var(--text-dim); font-size:0.8rem; letter-spacing:0.2em;">
+          시작 버튼을 눌러 첫 번째 신호를 수신하세요
+        </div>
+        <div class="signal-container" id="rxSignals"></div>
+      </div>
+
+      <div class="input-area">
+        <input type="text" class="answer-input" id="rxInput" placeholder="?" maxlength="1" autocomplete="off" disabled>
+        <button class="btn btn-amber" id="rxHintBtn" onclick="rxShowHint()" disabled>힌트</button>
+        <button class="btn btn-primary" id="rxPlayBtn" onclick="rxPlay()">▶ 신호 재생</button>
+      </div>
+
+      <div class="feedback" id="rxFeedback"></div>
+
+      <div class="btn-row" style="margin-top:12px;">
+        <button class="btn btn-primary" id="rxStartBtn" onclick="rxStart()">▶ 시작하기</button>
+        <button class="btn" onclick="rxPlay()" id="rxReplayBtn" disabled>↺ 다시 듣기</button>
+        <button class="btn btn-amber" onclick="rxShowHint()" id="rxHintBtn2" disabled>모스부호 보기</button>
+      </div>
+
+      <div class="hint-box hidden" id="rxHintBox"></div>
+    </div>
+
+    <!-- TRANSMIT -->
+    <div class="screen" id="screen-transmit">
+      <div class="screen-title">▸ 발신 훈련</div>
+      <div class="screen-desc">화면의 문자를 보고 스페이스바로 모스부호를 입력하세요</div>
+
+      <div class="hint-box">
+        🎛️ <strong>조작법:</strong> <kbd style="background:var(--panel2);border:1px solid var(--border2);padding:2px 8px;border-radius:4px;font-family:monospace;">스페이스바</kbd> 누르고 있으면 <strong>선(—)</strong>, 짧게 누르면 <strong>점(·)</strong> &nbsp;|&nbsp;
+        <kbd style="background:var(--panel2);border:1px solid var(--border2);padding:2px 8px;border-radius:4px;font-family:monospace;">Enter</kbd> 로 글자 확정
+      </div>
+
+      <div class="score-panel">
+        <div class="score-card">
+          <div class="score-num" id="txScore">0</div>
+          <div class="score-lbl">점수</div>
+        </div>
+        <div class="score-card">
+          <div class="score-num" id="txStreak">0</div>
+          <div class="score-lbl">연속 정답</div>
+        </div>
+        <div class="score-card">
+          <div class="score-num" id="txCorrect">0</div>
+          <div class="score-lbl">정답</div>
+        </div>
+        <div class="score-card">
+          <div class="score-num" id="txWrong">0</div>
+          <div class="score-lbl">오답</div>
+        </div>
+      </div>
+
+      <div class="morse-display" id="txDisplay">
+        <div class="target-char" id="txTarget">?</div>
+        <div style="font-family:'Share Tech Mono';font-size:0.75rem;color:var(--text-dim);text-align:center;letter-spacing:0.15em;">
+          목표 문자
+        </div>
+      </div>
+
+      <div class="key-area" id="txKeyArea">
+        <div style="font-family:'Share Tech Mono';font-size:0.7rem;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:12px;">
+          ▸ 입력한 모스부호
+        </div>
+        <div class="input-morse-display" id="txMorseInput">—</div>
+        <div class="input-decoded" id="txDecoded">입력 대기중</div>
+        <div style="margin-top:16px;">
+          <div class="key-btn" id="txKeyVisual"
+            onmousedown="txKeyDown()" onmouseup="txKeyUp()"
+            ontouchstart="txKeyDown()" ontouchend="txKeyUp()">
+            ⬛ SPACE — 누르기
+          </div>
+        </div>
+      </div>
+
+      <div class="feedback" id="txFeedback"></div>
+
+      <div class="btn-row" style="margin-top:12px;">
+        <button class="btn btn-primary" id="txStartBtn" onclick="txStart()">▶ 시작하기</button>
+        <button class="btn" onclick="txClear()">✕ 지우기</button>
+        <button class="btn btn-amber" onclick="txSubmit()" id="txSubmitBtn" disabled>✓ 확정 (Enter)</button>
+        <button class="btn btn-amber" onclick="txShowAnswer()" id="txAnswerBtn" disabled>정답 보기</button>
+      </div>
+    </div>
+
+    <!-- WORD -->
+    <div class="screen" id="screen-word">
+      <div class="screen-title">▸ 단어 발신 도전</div>
+      <div class="screen-desc">단어를 한 글자씩 모스부호로 입력해보세요</div>
+
+      <div class="hint-box">
+        🎛️ <strong>조작법:</strong> 스페이스바로 모스부호 입력 → Enter로 글자 확정. 단어 전체를 완성하세요!
+      </div>
+
+      <div class="morse-display">
+        <div class="word-letters" id="wordLetters"></div>
+        <div style="font-family:'Share Tech Mono';font-size:0.75rem;color:var(--text-dim);text-align:center;margin-top:8px;letter-spacing:0.15em;" id="wordCurrentMorse">—</div>
+        <div class="input-morse-display" id="wordMorseInput" style="margin-top:8px;">—</div>
+      </div>
+
+      <div class="key-area">
+        <div class="key-btn" id="wordKeyVisual"
+          onmousedown="wordKeyDown()" onmouseup="wordKeyUp()"
+          ontouchstart="wordKeyDown()" ontouchend="wordKeyUp()">
+          ⬛ SPACE — 누르기
+        </div>
+      </div>
+
+      <div class="feedback" id="wordFeedback"></div>
+
+      <div class="btn-row" style="margin-top:12px;">
+        <button class="btn btn-primary" onclick="wordStart()">▶ 새 단어</button>
+        <button class="btn" onclick="wordClear()">✕ 지우기</button>
+        <button class="btn btn-amber" onclick="wordSubmitLetter()" id="wordSubmitBtn" disabled>✓ 글자 확정 (Enter)</button>
+        <button class="btn btn-amber" onclick="wordShowAnswer()">정답 보기</button>
+      </div>
+
+      <div style="margin-top:20px;">
+        <div class="section-header">── 완성된 단어 기록</div>
+        <div id="wordHistory" style="font-family:'Share Tech Mono';font-size:0.8rem;color:var(--text-dim);letter-spacing:0.1em;line-height:2.2;"></div>
+      </div>
+    </div>
+
+    <!-- CHALLENGE -->
+    <div class="screen" id="screen-challenge">
+      <div class="screen-title">▸ 스피드 챌린지</div>
+      <div class="screen-desc">60초 안에 최대한 많이 맞추세요! 수신 + 발신 통합 모드</div>
+
+      <div id="chReady">
+        <div style="text-align:center;padding:40px 0;">
+          <div style="font-family:'Orbitron',monospace;font-size:2rem;color:var(--green);letter-spacing:0.2em;margin-bottom:16px;">
+            ⚡ 챌린지 준비
+          </div>
+          <div style="font-family:'Share Tech Mono';color:var(--text-dim);font-size:0.85rem;letter-spacing:0.1em;margin-bottom:24px;line-height:1.8;">
+            60초 제한 &nbsp;|&nbsp; 수신 문제 (신호 듣고 맞추기) &nbsp;|&nbsp; 연속 정답 보너스<br>
+            정답: +10점 &nbsp;|&nbsp; 연속 2개: +5 보너스 &nbsp;|&nbsp; 오답: -5점
+          </div>
+          <button class="btn btn-primary" onclick="chStart()" style="font-size:1rem;padding:16px 40px;">
+            ▶ 챌린지 시작
+          </button>
+        </div>
+      </div>
+
+      <div id="chGame" class="hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="score-card" style="flex:1;margin-right:12px;">
+            <div class="score-num" id="chScore">0</div>
+            <div class="score-lbl">점수</div>
+          </div>
+          <div class="score-card" style="flex:1;margin-right:12px;">
+            <div class="score-num" id="chCorrect">0</div>
+            <div class="score-lbl">정답</div>
+          </div>
+          <div class="score-card" style="flex:1;">
+            <div class="score-num" id="chTimer" style="color:var(--amber);">60</div>
+            <div class="score-lbl">남은 시간</div>
+          </div>
+        </div>
+
+        <div class="timer-bar-wrap">
+          <div class="timer-bar-fill" id="chTimerBar" style="width:100%;"></div>
+        </div>
+
+        <div class="morse-display flash" id="chDisplay">
+          <div class="signal-container" id="chSignals"></div>
+          <div style="font-family:'Share Tech Mono';font-size:0.8rem;color:var(--text-dim);text-align:center;letter-spacing:0.2em;">신호를 듣고 문자를 입력하세요</div>
+        </div>
+
+        <div class="input-area" style="margin-top:16px;">
+          <input type="text" class="answer-input" id="chInput" placeholder="?" maxlength="1" autocomplete="off">
+          <button class="btn" onclick="chPlaySignal()">↺ 다시 듣기</button>
+        </div>
+
+        <div class="feedback" id="chFeedback"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Result overlay -->
+<div class="result-overlay" id="resultOverlay">
+  <div class="result-box">
+    <div class="result-title" id="resultTitle">MISSION COMPLETE</div>
+    <div class="result-score" id="resultScore">0</div>
+    <div class="result-sub" id="resultSub"></div>
+    <div class="btn-row" style="justify-content:center;">
+      <button class="btn btn-primary" onclick="closeResult()">확인</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+//  MORSE CODE DATA
+// ════════════════════════════════════════
+const MORSE = {
+  'A':'.-',    'B':'-...',  'C':'-.-.',  'D':'-..',
+  'E':'.',     'F':'..-.',  'G':'--.',   'H':'....',
+  'I':'..',    'J':'.---',  'K':'-.-',   'L':'.-..',
+  'M':'--',    'N':'-.',    'O':'---',   'P':'.--.',
+  'Q':'--.-',  'R':'.-.',   'S':'...',   'T':'-',
+  'U':'..-',   'V':'...-',  'W':'.--',   'X':'-..-',
+  'Y':'-.--',  'Z':'--..',
+  '0':'-----', '1':'.----', '2':'..---', '3':'...--',
+  '4':'....-', '5':'.....', '6':'-....', '7':'--...',
+  '8':'---..',  '9':'----.'
+};
+
+// Reverse lookup
+const MORSE_REV = {};
+Object.entries(MORSE).forEach(([c,m])=>MORSE_REV[m]=c);
+
+const ALL_CHARS = Object.keys(MORSE);
+const ALPHA = ALL_CHARS.filter(c => isNaN(c));
+const NUMS  = ALL_CHARS.filter(c => !isNaN(c));
+
+const EASY_CHARS  = ['E','T','I','A','N','M','S','O'];
+const MED_CHARS   = [...ALPHA.slice(0,18),...NUMS.slice(0,5)];
+const HARD_CHARS  = ALL_CHARS;
+
+let difficulty = 'easy';
+let totalScore = 0;
+let totalStreak= 0;
+
+// Words for word challenge
+const WORDS = [
+  'SOS','CAT','DOG','HAM','KEY','ANT','BEE','COD','EEL','FIG',
+  'GEM','HIT','ICE','JAR','KIT','LOG','MAP','NET','OAK','PAN',
+  'ACE','BAT','CUP','DIM','EGG','FAN','GAS','HOP','INK','JAM',
+  'HELLO','WORLD','MORSE','RADIO','SIGNAL','ALPHA','BRAVO',
+  'ECHO','FOXTROT','GOLF','HOTEL','INDIA','JULIET','KILO',
+  'LIME','MIKE','OSCAR','PAPA','QUEBEC','ROMEO','SIERRA',
+  'TANGO','UNIFORM','VICTOR','WHISKEY','XRAY','YANKEE','ZULU'
+];
+
+// ════════════════════════════════════════
+//  AUDIO ENGINE — 중첩 방지 완전 재작성
+// ════════════════════════════════════════
+let audioCtx = null;
+// 발신용: 키 누르는 동안 유지되는 단일 oscillator
+let keyOsc   = null;
+let keyGain  = null;
+
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// 수신/재생용 — 짧은 단발성 비프 (새 oscillator 매번 생성하되 즉시 자동종료)
+function beep(duration, frequency=700, vol=0.4) {
+  const ctx = getAudio();
+  const osc = ctx.createOscillator();
+  const g   = ctx.createGain();
+  osc.connect(g);
+  g.connect(ctx.destination);
+  osc.type = 'sine';
+  osc.frequency.value = frequency;
+  const t = ctx.currentTime;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol, t + 0.008);
+  g.gain.setValueAtTime(vol, t + duration - 0.008);
+  g.gain.linearRampToValueAtTime(0, t + duration);
+  osc.start(t);
+  osc.stop(t + duration);
+}
+
+// 발신 키 누름 시작 — oscillator 하나 켜두기
+function keyToneStart() {
+  keyToneStop(); // 혹시 남아있는 거 먼저 정리
+  const ctx = getAudio();
+  keyOsc  = ctx.createOscillator();
+  keyGain = ctx.createGain();
+  keyOsc.connect(keyGain);
+  keyGain.connect(ctx.destination);
+  keyOsc.type = 'sine';
+  keyOsc.frequency.value = 700;
+  keyGain.gain.setValueAtTime(0, ctx.currentTime);
+  keyGain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.01);
+  keyOsc.start();
+}
+
+// 발신 키 뗄 때 — oscillator 부드럽게 종료
+function keyToneStop() {
+  if (!keyOsc) return;
+  const ctx = getAudio();
+  try {
+    keyGain.gain.setValueAtTime(keyGain.gain.value, ctx.currentTime);
+    keyGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.015);
+    keyOsc.stop(ctx.currentTime + 0.02);
+  } catch(e) {}
+  keyOsc  = null;
+  keyGain = null;
+}
+
+function playMorse(morseStr, speed=1, callback=null) {
+  // Speed multiplier: 1 = normal, 2 = fast
+  const dot  = 0.08 / speed;
+  const dash = dot * 3;
+  const gap  = dot;
+  const charGap = dot * 3;
+
+  let t = 0;
+  for(let i=0; i<morseStr.length; i++) {
+    const sym = morseStr[i];
+    const delay = t;
+    if(sym === '.') {
+      setTimeout(()=>beep(dot, 700), delay*1000);
+      t += dot + gap;
+    } else if(sym === '-') {
+      setTimeout(()=>beep(dash, 700), delay*1000);
+      t += dash + gap;
+    } else if(sym === ' ') {
+      t += charGap;
+    }
+  }
+
+  const totalTime = t * 1000 + 200;
+  if(callback) setTimeout(callback, totalTime);
+  return totalTime;
+}
+
+function playMorseWithVisual(morseStr, signalContainer, speed=1, callback=null) {
+  signalContainer.innerHTML = '';
+
+  const segs = [];
+  for(let ch of morseStr) {
+    if(ch==='.' || ch==='-') segs.push(ch);
+  }
+
+  segs.forEach(s=>{
+    const el = document.createElement('div');
+    el.className = s==='.' ? 'signal-dot' : 'signal-dash';
+    signalContainer.appendChild(el);
+  });
+
+  const dot  = 80 / speed;
+  const dash = dot * 3;
+  const gap  = dot;
+
+  let t = 0;
+  let si = 0;
+  for(let ch of morseStr) {
+    if(ch==='.' || ch==='-') {
+      const idx = si;
+      const dur = ch==='.' ? dot : dash;
+      setTimeout(()=>{
+        const el = signalContainer.children[idx];
+        if(el) {
+          el.classList.add('lit');
+          if(ch==='.') beep(dot/1000, 700);
+          else beep(dash/1000, 700);
+          setTimeout(()=>el.classList.remove('lit'), dur);
+        }
+      }, t);
+      t += dur + gap;
+      si++;
+    } else {
+      t += gap * 2;
+    }
+  }
+
+  const total = t + 300;
+  if(callback) setTimeout(callback, total);
+  return total;
+}
+
+function getSpeed() {
+  if(difficulty==='easy') return 0.7;
+  if(difficulty==='mid')  return 1.0;
+  return 1.6;
+}
+
+function getCharPool() {
+  if(difficulty==='easy') return EASY_CHARS;
+  if(difficulty==='mid')  return MED_CHARS;
+  return HARD_CHARS;
+}
+
+function randomChar(pool) {
+  pool = pool || getCharPool();
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+// ════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  const nb = document.getElementById('nav-'+id);
+  if(nb) nb.classList.add('active');
+
+  // Init screens
+  if(id==='study') buildRefTable();
+  if(id==='receive') rxReset();
+  if(id==='transmit') txReset();
+  if(id==='word') wordReset();
+  if(id==='challenge') chReset();
+}
+
+function setDifficulty(d, btn) {
+  difficulty = d;
+  document.querySelectorAll('.diff-btn').forEach(b=>{
+    b.className = 'diff-btn';
+  });
+  btn.classList.add('active-'+d);
+
+  // Reset current game if active
+  rxReset();
+  txReset();
+}
+
+function updateHeaderStats() {
+  document.getElementById('headerScore').textContent = totalScore;
+  document.getElementById('headerStreak').textContent = totalStreak;
+}
+
+// ════════════════════════════════════════
+//  STUDY — REFERENCE TABLE
+// ════════════════════════════════════════
+function buildRefTable() {
+  const alphaDiv = document.getElementById('refAlpha');
+  const numsDiv  = document.getElementById('refNums');
+  alphaDiv.innerHTML = '';
+  numsDiv.innerHTML = '';
+
+  ALPHA.forEach(ch=>{
+    const card = document.createElement('div');
+    card.className = 'ref-card';
+    card.innerHTML = `<div class="ref-char">${ch}</div><div class="ref-morse">${MORSE[ch]}</div>`;
+    card.onclick = ()=>{ playMorse(MORSE[ch], 0.8); highlightCard(card); };
+    alphaDiv.appendChild(card);
+  });
+
+  NUMS.forEach(ch=>{
+    const card = document.createElement('div');
+    card.className = 'ref-card';
+    card.innerHTML = `<div class="ref-char">${ch}</div><div class="ref-morse">${MORSE[ch]}</div>`;
+    card.onclick = ()=>{ playMorse(MORSE[ch], 0.8); highlightCard(card); };
+    numsDiv.appendChild(card);
+  });
+}
+
+function highlightCard(card) {
+  document.querySelectorAll('.ref-card').forEach(c=>c.style.borderColor='');
+  card.style.borderColor = 'var(--green)';
+  card.style.background  = 'var(--green-glow)';
+  setTimeout(()=>{
+    card.style.borderColor = '';
+    card.style.background  = '';
+  }, 800);
+}
+
+// ════════════════════════════════════════
+//  RECEIVE MODE
+// ════════════════════════════════════════
+let rxState = {
+  active: false,
+  currentChar: null,
+  score:0, streak:0, correct:0, wrong:0,
+  playing: false
+};
+
+function rxReset() {
+  rxState = {active:false, currentChar:null, score:0, streak:0, correct:0, wrong:0, playing:false};
+  document.getElementById('rxScore').textContent   = 0;
+  document.getElementById('rxStreak').textContent  = 0;
+  document.getElementById('rxCorrect').textContent = 0;
+  document.getElementById('rxWrong').textContent   = 0;
+  document.getElementById('rxInput').value = '';
+  document.getElementById('rxInput').disabled = true;
+  document.getElementById('rxFeedback').textContent = '';
+  document.getElementById('rxFeedback').className   = 'feedback';
+  document.getElementById('rxHintBox').classList.add('hidden');
+  document.getElementById('rxHintBtn').disabled  = true;
+  document.getElementById('rxHintBtn2').disabled = true;
+  document.getElementById('rxReplayBtn').disabled = true;
+  document.getElementById('rxSignals').innerHTML = '';
+}
+
+function rxStart() {
+  rxState.active = true;
+  document.getElementById('rxStartBtn').textContent = '↺ 다음 문제';
+  rxNextChar();
+}
+
+function rxNextChar() {
+  const pool = getCharPool();
+  rxState.currentChar = randomChar(pool);
+  rxState.playing = true;
+
+  const inp = document.getElementById('rxInput');
+  inp.value = '';
+  inp.disabled = false;
+  inp.className = 'answer-input';
+  inp.focus();
+
+  document.getElementById('rxFeedback').textContent = '';
+  document.getElementById('rxHintBox').classList.add('hidden');
+  document.getElementById('rxHintBtn').disabled  = false;
+  document.getElementById('rxHintBtn2').disabled = false;
+  document.getElementById('rxReplayBtn').disabled = false;
+
+  // Show blank display while playing
+  const dispEl = document.getElementById('rxDisplay');
+  dispEl.className = 'morse-display';
+
+  rxPlay();
+}
+
+function rxPlay() {
+  if(!rxState.currentChar) return;
+  const morse = MORSE[rxState.currentChar];
+  const container = document.getElementById('rxSignals');
+  playMorseWithVisual(morse, container, getSpeed());
+}
+
+function rxShowHint() {
+  if(!rxState.currentChar) return;
+  const morse = MORSE[rxState.currentChar];
+  const hintBox = document.getElementById('rxHintBox');
+  hintBox.textContent = `▸ 모스부호: ${morse}`;
+  hintBox.classList.remove('hidden');
+}
+
+function rxCheck(val) {
+  if(!rxState.active || !rxState.currentChar) return;
+  val = val.toUpperCase().trim();
+  if(!val) return;
+
+  const correct = rxState.currentChar;
+  const dispEl  = document.getElementById('rxDisplay');
+  const inp     = document.getElementById('rxInput');
+  const fb      = document.getElementById('rxFeedback');
+
+  if(val === correct) {
+    rxState.score   += diffPoints();
+    rxState.streak  += 1;
+    rxState.correct += 1;
+    totalScore  += diffPoints();
+    totalStreak += 1;
+
+    inp.className = 'answer-input correct';
+    dispEl.classList.add('flash-correct');
+    fb.textContent = `✓ 정답! "${correct}" = ${MORSE[correct]}   (+${diffPoints()}점)`;
+    fb.className   = 'feedback ok';
+
+    setTimeout(()=>{ dispEl.classList.remove('flash-correct'); }, 500);
+  } else {
+    rxState.score  = Math.max(0, rxState.score - 5);
+    rxState.streak = 0;
+    rxState.wrong += 1;
+    totalStreak = 0;
+
+    inp.className = 'answer-input wrong';
+    dispEl.classList.add('flash-wrong');
+    fb.textContent = `✗ 오답. 정답은 "${correct}" = ${MORSE[correct]}`;
+    fb.className   = 'feedback err';
+
+    setTimeout(()=>{ dispEl.classList.remove('flash-wrong'); }, 500);
+    playMorse(MORSE[correct], 0.7);
+  }
+
+  updateRxStats();
+  updateHeaderStats();
+
+  setTimeout(()=>{
+    if(rxState.active) rxNextChar();
+  }, 1500);
+}
+
+function updateRxStats() {
+  document.getElementById('rxScore').textContent   = rxState.score;
+  document.getElementById('rxStreak').textContent  = rxState.streak;
+  document.getElementById('rxCorrect').textContent = rxState.correct;
+  document.getElementById('rxWrong').textContent   = rxState.wrong;
+}
+
+function diffPoints() {
+  if(difficulty==='easy') return 5;
+  if(difficulty==='mid')  return 10;
+  return 20;
+}
+
+// Input listener for receive mode
+document.addEventListener('DOMContentLoaded', ()=>{
+  const rxInp = document.getElementById('rxInput');
+  rxInp.addEventListener('input', e=>{
+    const v = e.target.value;
+    if(v.length >= 1) rxCheck(v[v.length-1]);
+  });
+  rxInp.addEventListener('keydown', e=>{
+    if(e.key==='Enter' && rxInp.value) rxCheck(rxInp.value);
+  });
+});
+
+// ════════════════════════════════════════
+//  TRANSMIT MODE
+// ════════════════════════════════════════
+let txState = {
+  active: false,
+  currentChar: null,
+  score:0, streak:0, correct:0, wrong:0,
+  inputMorse: '',
+  keyDownTime: null,
+  keyDown: false,
+  dotThreshold: 200  // ms
+};
+
+function txReset() {
+  txState = {active:false, currentChar:null, score:0, streak:0, correct:0, wrong:0,
+             inputMorse:'', keyDownTime:null, keyDown:false, dotThreshold:200};
+  document.getElementById('txScore').textContent   = 0;
+  document.getElementById('txStreak').textContent  = 0;
+  document.getElementById('txCorrect').textContent = 0;
+  document.getElementById('txWrong').textContent   = 0;
+  document.getElementById('txTarget').textContent  = '?';
+  document.getElementById('txMorseInput').textContent = '—';
+  document.getElementById('txDecoded').textContent    = '입력 대기중';
+  document.getElementById('txFeedback').textContent   = '';
+  document.getElementById('txFeedback').className     = 'feedback';
+  document.getElementById('txSubmitBtn').disabled = true;
+  document.getElementById('txAnswerBtn').disabled = true;
+}
+
+function txStart() {
+  txState.active = true;
+  document.getElementById('txStartBtn').textContent = '↺ 다음 문제';
+  document.getElementById('txSubmitBtn').disabled = false;
+  document.getElementById('txAnswerBtn').disabled = false;
+  txNextChar();
+}
+
+function txNextChar() {
+  txState.currentChar = randomChar(getCharPool());
+  txState.inputMorse  = '';
+  document.getElementById('txTarget').textContent = txState.currentChar;
+  document.getElementById('txMorseInput').textContent = '—';
+  document.getElementById('txDecoded').textContent    = '입력 대기중';
+  document.getElementById('txFeedback').textContent   = '';
+  document.getElementById('txFeedback').className     = 'feedback';
+}
+
+function txKeyDown() {
+  if(!txState.active) return;
+  if(txState.keyDown) return;
+  txState.keyDown = true;
+  txState.keyDownTime = Date.now();
+  document.getElementById('txKeyVisual').classList.add('active');
+  keyToneStart();
+}
+
+function txKeyUp() {
+  if(!txState.active || !txState.keyDown) return;
+  txState.keyDown = false;
+  keyToneStop();
+  document.getElementById('txKeyVisual').classList.remove('active');
+
+  const dur = Date.now() - txState.keyDownTime;
+  const sym = dur < txState.dotThreshold ? '.' : '-';
+  txState.inputMorse += sym;
+
+  const display = document.getElementById('txMorseInput');
+  display.textContent = txState.inputMorse;
+
+  // Try decode
+  const decoded = MORSE_REV[txState.inputMorse] || '?';
+  document.getElementById('txDecoded').textContent = decoded !== '?' ? `→ ${decoded}` : '(미완성)';
+}
+
+function txClear() {
+  txState.inputMorse = '';
+  document.getElementById('txMorseInput').textContent = '—';
+  document.getElementById('txDecoded').textContent    = '입력 대기중';
+}
+
+function txSubmit() {
+  if(!txState.active || !txState.currentChar) return;
+  const decoded = MORSE_REV[txState.inputMorse];
+  const correct = txState.currentChar;
+  const fb = document.getElementById('txFeedback');
+
+  if(decoded === correct) {
+    txState.score   += diffPoints();
+    txState.streak  += 1;
+    txState.correct += 1;
+    totalScore  += diffPoints();
+    totalStreak += 1;
+    fb.textContent = `✓ 정답! "${correct}" = ${MORSE[correct]}   (+${diffPoints()}점)`;
+    fb.className   = 'feedback ok';
+    playMorse(MORSE[correct], 1);
+  } else {
+    txState.score  = Math.max(0, txState.score - 5);
+    txState.streak = 0;
+    txState.wrong += 1;
+    totalStreak = 0;
+    const got = decoded || `?? (${txState.inputMorse})`;
+    fb.textContent = `✗ 오답. 입력: ${got} / 정답: ${correct} = ${MORSE[correct]}`;
+    fb.className   = 'feedback err';
+    playMorse(MORSE[correct], 0.7);
+  }
+
+  updateTxStats();
+  updateHeaderStats();
+
+  setTimeout(()=>{ if(txState.active) txNextChar(); }, 1800);
+}
+
+function txShowAnswer() {
+  if(!txState.currentChar) return;
+  const ch = txState.currentChar;
+  const fb = document.getElementById('txFeedback');
+  fb.textContent = `정답: "${ch}" = ${MORSE[ch]}`;
+  fb.className   = 'feedback info';
+  playMorse(MORSE[ch], 0.8);
+}
+
+function updateTxStats() {
+  document.getElementById('txScore').textContent   = txState.score;
+  document.getElementById('txStreak').textContent  = txState.streak;
+  document.getElementById('txCorrect').textContent = txState.correct;
+  document.getElementById('txWrong').textContent   = txState.wrong;
+}
+
+// Keyboard listeners
+document.addEventListener('keydown', e=>{
+  // Transmit mode
+  if(document.getElementById('screen-transmit').classList.contains('active')) {
+    if(e.code==='Space' && !e.repeat) { e.preventDefault(); txKeyDown(); }
+    if(e.code==='Enter') { e.preventDefault(); txSubmit(); }
+    if(e.code==='Backspace') { e.preventDefault(); txClear(); }
+  }
+  // Word mode
+  if(document.getElementById('screen-word').classList.contains('active')) {
+    if(e.code==='Space' && !e.repeat) { e.preventDefault(); wordKeyDown(); }
+    if(e.code==='Enter') { e.preventDefault(); wordSubmitLetter(); }
+    if(e.code==='Backspace') { e.preventDefault(); wordClear(); }
+  }
+  // Receive mode
+  if(document.getElementById('screen-challenge').classList.contains('active')) {
+    const inp = document.getElementById('chInput');
+    if(document.activeElement !== inp) inp.focus();
+  }
+});
+
+document.addEventListener('keyup', e=>{
+  if(document.getElementById('screen-transmit').classList.contains('active')) {
+    if(e.code==='Space') { e.preventDefault(); txKeyUp(); }
+  }
+  if(document.getElementById('screen-word').classList.contains('active')) {
+    if(e.code==='Space') { e.preventDefault(); wordKeyUp(); }
+  }
+});
+
+// ════════════════════════════════════════
+//  WORD MODE
+// ════════════════════════════════════════
+let wordState = {
+  word: '',
+  letterIdx: 0,
+  inputMorse: '',
+  keyDownTime: null,
+  keyDown: false,
+  dotThreshold: 200,
+  history: [],
+  active: false
+};
+let wordBeepInterval = null;
+
+function wordReset() {
+  wordState = {word:'', letterIdx:0, inputMorse:'', keyDownTime:null, keyDown:false, dotThreshold:200, history:[], active:false};
+  document.getElementById('wordLetters').innerHTML = '';
+  document.getElementById('wordMorseInput').textContent = '—';
+  document.getElementById('wordCurrentMorse').textContent = '—';
+  document.getElementById('wordFeedback').textContent = '';
+  document.getElementById('wordSubmitBtn').disabled = true;
+}
+
+function wordStart() {
+  wordState.active = true;
+  wordState.inputMorse = '';
+  wordState.letterIdx  = 0;
+  wordState.keyDown = false;
+
+  const idx = Math.floor(Math.random()*WORDS.length);
+  wordState.word = WORDS[idx];
+
+  renderWordLetters();
+  document.getElementById('wordMorseInput').textContent = '—';
+  document.getElementById('wordFeedback').textContent = '';
+  document.getElementById('wordFeedback').className   = 'feedback';
+  document.getElementById('wordSubmitBtn').disabled = false;
+  updateWordCurrentMorse();
+}
+
+function renderWordLetters() {
+  const container = document.getElementById('wordLetters');
+  container.innerHTML = '';
+  for(let i=0; i<wordState.word.length; i++) {
+    const el = document.createElement('div');
+    el.className = 'word-letter';
+    el.id = `wl-${i}`;
+    if(i===0) el.classList.add('current');
+    el.textContent = wordState.word[i];
+    container.appendChild(el);
+  }
+}
+
+function updateWordCurrentMorse() {
+  if(wordState.letterIdx < wordState.word.length) {
+    const ch = wordState.word[wordState.letterIdx];
+    document.getElementById('wordCurrentMorse').textContent =
+      `목표: "${ch}" = ${MORSE[ch]}`;
+  }
+}
+
+function wordKeyDown() {
+  if(!wordState.active) return;
+  if(wordState.keyDown) return;
+  wordState.keyDown = true;
+  wordState.keyDownTime = Date.now();
+  document.getElementById('wordKeyVisual').classList.add('active');
+  keyToneStart();
+}
+
+function wordKeyUp() {
+  if(!wordState.active || !wordState.keyDown) return;
+  wordState.keyDown = false;
+  keyToneStop();
+  document.getElementById('wordKeyVisual').classList.remove('active');
+
+  const dur = Date.now() - wordState.keyDownTime;
+  const sym = dur < wordState.dotThreshold ? '.' : '-';
+  wordState.inputMorse += sym;
+  document.getElementById('wordMorseInput').textContent = wordState.inputMorse;
+}
+
+function wordClear() {
+  wordState.inputMorse = '';
+  document.getElementById('wordMorseInput').textContent = '—';
+}
+
+function wordSubmitLetter() {
+  if(!wordState.active) return;
+  if(wordState.letterIdx >= wordState.word.length) return;
+
+  const targetCh = wordState.word[wordState.letterIdx];
+  const decoded  = MORSE_REV[wordState.inputMorse];
+  const letterEl = document.getElementById(`wl-${wordState.letterIdx}`);
+  const fb = document.getElementById('wordFeedback');
+
+  if(decoded === targetCh) {
+    letterEl.classList.remove('current');
+    letterEl.classList.add('done');
+    fb.textContent = `✓ "${targetCh}" 정답!`;
+    fb.className   = 'feedback ok';
+    playMorse(MORSE[targetCh], 1);
+  } else {
+    letterEl.classList.add('error');
+    fb.textContent = `✗ 오답. "${targetCh}" = ${MORSE[targetCh]} / 입력: ${wordState.inputMorse||'없음'}`;
+    fb.className   = 'feedback err';
+    // still advance
+  }
+
+  wordState.letterIdx++;
+  wordState.inputMorse = '';
+  document.getElementById('wordMorseInput').textContent = '—';
+
+  if(wordState.letterIdx >= wordState.word.length) {
+    const allDone   = document.querySelectorAll('.word-letter.done').length;
+    const allLetters = wordState.word.length;
+    wordState.history.push({word:wordState.word, ok:allDone, total:allLetters});
+    updateWordHistory();
+    fb.textContent = `🎉 단어 완성! "${wordState.word}" (${allDone}/${allLetters} 정답)`;
+    fb.className   = 'feedback ok';
+    document.getElementById('wordSubmitBtn').disabled = true;
+
+    setTimeout(()=>wordStart(), 2000);
+  } else {
+    const next = document.getElementById(`wl-${wordState.letterIdx}`);
+    if(next) next.classList.add('current');
+    updateWordCurrentMorse();
+  }
+}
+
+function wordShowAnswer() {
+  if(!wordState.active || wordState.letterIdx >= wordState.word.length) return;
+  const ch = wordState.word[wordState.letterIdx];
+  const fb = document.getElementById('wordFeedback');
+  fb.textContent = `정답: "${ch}" = ${MORSE[ch]}`;
+  fb.className   = 'feedback info';
+  playMorse(MORSE[ch], 0.8);
+}
+
+function updateWordHistory() {
+  const div = document.getElementById('wordHistory');
+  div.innerHTML = wordState.history.slice(-5).reverse().map(h=>
+    `▸ ${h.word}  —  ${h.ok}/${h.total} 정답`
+  ).join('<br>');
+}
+
+// ════════════════════════════════════════
+//  CHALLENGE MODE
+// ════════════════════════════════════════
+let chState = {
+  active: false,
+  score: 0,
+  correct: 0,
+  streak: 0,
+  timeLeft: 60,
+  timerInterval: null,
+  currentChar: null,
+  total: 60
+};
+
+function chReset() {
+  if(chState.timerInterval) clearInterval(chState.timerInterval);
+  chState = {active:false, score:0, correct:0, streak:0, timeLeft:60, timerInterval:null, currentChar:null, total:60};
+  document.getElementById('chReady').classList.remove('hidden');
+  document.getElementById('chGame').classList.add('hidden');
+}
+
+function chStart() {
+  chState.active   = true;
+  chState.score    = 0;
+  chState.correct  = 0;
+  chState.streak   = 0;
+  chState.timeLeft = 60;
+  chState.total    = 60;
+
+  document.getElementById('chReady').classList.add('hidden');
+  document.getElementById('chGame').classList.remove('hidden');
+  document.getElementById('chScore').textContent   = 0;
+  document.getElementById('chCorrect').textContent = 0;
+  document.getElementById('chTimer').textContent   = 60;
+  document.getElementById('chFeedback').textContent = '';
+  document.getElementById('chInput').value = '';
+  document.getElementById('chInput').disabled = false;
+  document.getElementById('chInput').focus();
+
+  chState.timerInterval = setInterval(()=>{
+    chState.timeLeft--;
+    document.getElementById('chTimer').textContent = chState.timeLeft;
+    const pct = (chState.timeLeft/chState.total)*100;
+    document.getElementById('chTimerBar').style.width = pct+'%';
+
+    if(chState.timeLeft<=0) {
+      clearInterval(chState.timerInterval);
+      chEnd();
+    }
+  }, 1000);
+
+  chNextChar();
+
+  // Input listener
+  const inp = document.getElementById('chInput');
+  inp.oninput = e=>{
+    const v = e.target.value.toUpperCase().trim();
+    if(v.length >= 1) chCheck(v[v.length-1]);
+  };
+}
+
+function chNextChar() {
+  chState.currentChar = randomChar(getCharPool());
+  const container = document.getElementById('chSignals');
+  const speed = getSpeed() * 1.2;
+  playMorseWithVisual(MORSE[chState.currentChar], container, speed);
+  document.getElementById('chInput').value = '';
+}
+
+function chPlaySignal() {
+  if(!chState.currentChar) return;
+  const container = document.getElementById('chSignals');
+  playMorseWithVisual(MORSE[chState.currentChar], container, getSpeed()*1.2);
+}
+
+function chCheck(val) {
+  if(!chState.active || !chState.currentChar) return;
+  val = val.toUpperCase().trim();
+  if(!val) return;
+
+  const correct = chState.currentChar;
+  const inp = document.getElementById('chInput');
+  const fb  = document.getElementById('chFeedback');
+
+  if(val === correct) {
+    chState.score   += 10;
+    chState.correct += 1;
+    chState.streak  += 1;
+    if(chState.streak >= 2) chState.score += 5; // streak bonus
+
+    inp.className = 'answer-input correct';
+    fb.textContent = chState.streak>=2
+      ? `✓ 연속 ${chState.streak}개! 보너스! (+15)` : `✓ 정답! (+10)`;
+    fb.className   = 'feedback ok';
+    totalScore += 10;
+  } else {
+    chState.score  = Math.max(0, chState.score - 5);
+    chState.streak = 0;
+    inp.className  = 'answer-input wrong';
+    fb.textContent = `✗ 오답. 정답: "${correct}"  (-5)`;
+    fb.className   = 'feedback err';
+    totalStreak = 0;
+  }
+
+  document.getElementById('chScore').textContent   = chState.score;
+  document.getElementById('chCorrect').textContent = chState.correct;
+  updateHeaderStats();
+
+  setTimeout(()=>{
+    inp.className = 'answer-input';
+    if(chState.active) chNextChar();
+  }, 600);
+}
+
+function chEnd() {
+  chState.active = false;
+  document.getElementById('chInput').disabled = true;
+
+  // Show result
+  const overlay = document.getElementById('resultOverlay');
+  document.getElementById('resultTitle').textContent = '챌린지 종료!';
+  document.getElementById('resultScore').textContent  = chState.score;
+  document.getElementById('resultSub').innerHTML =
+    `정답 ${chState.correct}개 &nbsp;|&nbsp; 최종 점수 ${chState.score}점<br>` +
+    (chState.score>=200 ? '🏆 놀라운 성과! MORSE MASTER!' :
+     chState.score>=100 ? '⭐ 훌륭합니다! 계속 연습하세요!' :
+     '📡 계속 도전하세요!');
+  overlay.classList.add('show');
+
+  totalScore += chState.score;
+  updateHeaderStats();
+}
+
+function closeResult() {
+  document.getElementById('resultOverlay').classList.remove('show');
+  chReset();
+}
+
+// Build study table on load
+window.addEventListener('load', ()=>{
+  buildRefTable();
+  showScreen('home');
+});
+</script>
+</body>
+</html>
