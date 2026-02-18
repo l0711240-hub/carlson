@@ -1134,6 +1134,73 @@
   @keyframes dots {
     0%{content:''} 25%{content:'.'} 50%{content:'..'} 75%{content:'...'} 100%{content:''}
   }
+
+  /* ── Intel briefing panel ────────────────── */
+  .intel-panel {
+    background: rgba(255,58,58,0.04);
+    border: 1px solid rgba(255,58,58,0.25);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .intel-panel-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.62rem;
+    color: rgba(255,58,58,0.7);
+    letter-spacing: 0.25em;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .intel-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .intel-row:last-child { border-bottom: none; }
+  .intel-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: rgba(255,58,58,0.6);
+    letter-spacing: 0.1em;
+    min-width: 90px;
+    flex-shrink: 0;
+  }
+  .intel-value {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.88rem;
+    color: #ff9090;
+    font-weight: 700;
+    flex: 1;
+  }
+  .intel-en {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.68rem;
+    color: rgba(255,144,144,0.5);
+    letter-spacing: 0.05em;
+    margin-left: 4px;
+  }
+  .intel-hint {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: rgba(255,179,0,0.4);
+    letter-spacing: 0.05em;
+    margin-left: auto;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .intel-panel-toggle {
+    cursor: pointer;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .intel-panel-toggle:hover { color: rgba(255,100,100,0.9); }
+
 </style>
 </head>
 <body>
@@ -1271,7 +1338,19 @@
     <!-- RECEIVE -->
     <div class="screen" id="screen-receive">
       <div class="screen-title">▸ 수신 훈련</div>
-      <div class="screen-desc">신호를 듣고 어떤 문자인지 입력하세요</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+        <div class="screen-desc" style="margin-bottom:0;">신호를 듣고 문자 또는 단어를 맞추세요</div>
+        <div style="display:flex;gap:6px;margin-left:auto;">
+          <button class="btn" id="rxModeChar" onclick="rxSetMode('char')"
+            style="padding:6px 14px;font-size:0.72rem;border-color:var(--green);color:var(--green);background:var(--green-glow);">
+            글자 모드
+          </button>
+          <button class="btn" id="rxModeWord" onclick="rxSetMode('word')"
+            style="padding:6px 14px;font-size:0.72rem;">
+            단어 모드
+          </button>
+        </div>
+      </div>
 
       <div class="score-panel">
         <div class="score-card">
@@ -1298,6 +1377,9 @@
         </div>
         <div class="signal-container" id="rxSignals"></div>
       </div>
+
+      <!-- 단어 모드: 글자 진행 표시 -->
+      <div id="rxWordLetters" class="word-letters" style="display:none;justify-content:center;margin-bottom:12px;"></div>
 
       <div class="input-area">
         <input type="text" class="answer-input" id="rxInput" placeholder="?" maxlength="1" autocomplete="off" disabled>
@@ -1488,7 +1570,13 @@
             <input type="password" class="api-input" id="scApiKey" placeholder="AIza...">
             <button class="btn btn-amber" onclick="scSaveApiKey()">확인</button>
           </div>
-          <div style="font-size:0.7rem;color:var(--text-dim);font-family:'Share Tech Mono';letter-spacing:0.05em;">
+          <div style="margin:8px 0;">
+            <button class="btn" onclick="scDiagnoseKey()" style="font-size:0.72rem;padding:8px 16px;">
+              🔍 사용 가능한 모델 확인
+            </button>
+          </div>
+          <div id="scDiagResult" style="font-family:'Share Tech Mono';font-size:0.72rem;color:var(--amber);letter-spacing:0.05em;margin-top:8px;line-height:1.8;"></div>
+          <div style="font-size:0.7rem;color:var(--text-dim);font-family:'Share Tech Mono';letter-spacing:0.05em;margin-top:8px;">
             키는 브라우저 내에만 저장되며 외부로 전송되지 않습니다
           </div>
         </div>
@@ -1503,6 +1591,36 @@
             ▶ 작전 개시
           </button>
           <button class="btn" onclick="scChangeApiKey()">🔑 API 키 변경</button>
+        </div>
+      </div>
+
+      <!-- 커스텀 시나리오 생성기 패널 -->
+      <div id="sc-step-creator" class="hidden">
+        <div style="max-width:600px;">
+          <div class="screen-title" style="margin-bottom:8px;">✏️ 나만의 시나리오 만들기</div>
+          <div class="screen-desc" style="margin-bottom:16px;">
+            한국어로 상황을 설명하면 AI가 영어 모스부호 통신 시나리오를 만들어줍니다
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <div class="diff-label" style="margin-bottom:6px;">어떤 상황인가요? (자유롭게 설명)</div>
+            <textarea id="scCreatorInput"
+              style="width:100%;background:var(--panel);border:1px solid var(--border2);
+                     border-radius:8px;padding:14px;color:var(--text);
+                     font-family:'Noto Sans KR',sans-serif;font-size:0.85rem;
+                     resize:vertical;min-height:100px;outline:none;line-height:1.7;"
+              placeholder="예: 태평양 전쟁 중 잠수함 함장으로서 본부에 적 함대 발견 보고를 해야 한다. 3가지 정보를 전달해야 한다."></textarea>
+          </div>
+
+          <div id="scCreatorStatus" style="font-family:'Share Tech Mono';font-size:0.78rem;
+               color:var(--amber);letter-spacing:0.05em;min-height:24px;margin-bottom:12px;"></div>
+
+          <div class="btn-row">
+            <button class="btn btn-amber" onclick="scCreateScenario()" id="scCreateBtn">
+              ⚡ AI로 시나리오 생성
+            </button>
+            <button class="btn" onclick="scCancelCreator()">취소</button>
+          </div>
         </div>
       </div>
 
@@ -1539,6 +1657,17 @@
           </div>
           <div class="signal-wave" id="scSignalWave"></div>
           <div style="font-family:'Share Tech Mono';font-size:0.7rem;color:var(--text-dim);margin-top:4px;" id="scRcvStatus">—</div>
+        </div>
+
+        <!-- Intel briefing panel -->
+        <div class="intel-panel" id="scIntelPanel" style="display:none;">
+          <div class="intel-panel-title">
+            <span class="intel-panel-toggle" onclick="toggleIntelPanel()">
+              ▸ <span id="scIntelToggleLabel">내가 전달해야 할 정보</span>
+              <span id="scIntelToggleIcon" style="margin-left:4px;">▾</span>
+            </span>
+          </div>
+          <div id="scIntelRows"></div>
         </div>
 
         <!-- Message log -->
@@ -1875,13 +2004,55 @@ function highlightCard(card) {
 // ════════════════════════════════════════
 let rxState = {
   active: false,
-  currentChar: null,
+  mode: 'char',         // 'char' | 'word'
+  currentChar: null,    // 글자 모드용
+  currentWord: null,    // 단어 모드용
+  wordLetterIdx: 0,     // 단어 모드: 현재 들려주는 글자 인덱스
   score:0, streak:0, correct:0, wrong:0,
   playing: false
 };
 
+function rxSetMode(mode) {
+  rxState.mode = mode;
+  const charBtn = document.getElementById('rxModeChar');
+  const wordBtn = document.getElementById('rxModeWord');
+
+  // 버튼 스타일 토글
+  if (mode === 'char') {
+    charBtn.style.cssText = 'padding:6px 14px;font-size:0.72rem;border-color:var(--green);color:var(--green);background:var(--green-glow);';
+    wordBtn.style.cssText = 'padding:6px 14px;font-size:0.72rem;border-color:var(--border);color:var(--text-dim);background:transparent;';
+    document.getElementById('rxInput').maxLength = 1;
+    document.getElementById('rxInput').placeholder = '?';
+    document.getElementById('rxWordLetters').style.display = 'none';
+  } else {
+    wordBtn.style.cssText = 'padding:6px 14px;font-size:0.72rem;border-color:var(--green);color:var(--green);background:var(--green-glow);';
+    charBtn.style.cssText = 'padding:6px 14px;font-size:0.72rem;border-color:var(--border);color:var(--text-dim);background:transparent;';
+    document.getElementById('rxInput').maxLength = 20;
+    document.getElementById('rxWordLetters').style.display = 'flex';
+  }
+
+  // 항상 리셋 후 즉시 시작
+  const prevActive = rxState.active;
+  rxState.active = false;
+  rxState.currentChar = null;
+  rxState.currentWord = null;
+  document.getElementById('rxInput').value = '';
+  document.getElementById('rxInput').disabled = false;
+  document.getElementById('rxFeedback').textContent = '';
+  document.getElementById('rxHintBox').classList.add('hidden');
+  document.getElementById('rxSignals').innerHTML = '';
+  document.getElementById('rxWordLetters').innerHTML = '';
+  document.getElementById('rxStartBtn').textContent = '↺ 다음 문제';
+
+  // 바로 새 문제 시작
+  rxState.active = true;
+  rxNextChar();
+}
+
 function rxReset() {
-  rxState = {active:false, currentChar:null, score:0, streak:0, correct:0, wrong:0, playing:false};
+  rxState = {active:false, mode: rxState.mode || 'char',
+             currentChar:null, currentWord:null, wordLetterIdx:0,
+             score:0, streak:0, correct:0, wrong:0, playing:false};
   document.getElementById('rxScore').textContent   = 0;
   document.getElementById('rxStreak').textContent  = 0;
   document.getElementById('rxCorrect').textContent = 0;
@@ -1895,6 +2066,7 @@ function rxReset() {
   document.getElementById('rxHintBtn2').disabled = true;
   document.getElementById('rxReplayBtn').disabled = true;
   document.getElementById('rxSignals').innerHTML = '';
+  document.getElementById('rxWordLetters').innerHTML = '';
 }
 
 function rxStart() {
@@ -1904,88 +2076,212 @@ function rxStart() {
 }
 
 function rxNextChar() {
-  const pool = getCharPool();
-  rxState.currentChar = randomChar(pool);
   rxState.playing = true;
-
   const inp = document.getElementById('rxInput');
   inp.value = '';
   inp.disabled = false;
   inp.className = 'answer-input';
-  inp.focus();
-
   document.getElementById('rxFeedback').textContent = '';
   document.getElementById('rxHintBox').classList.add('hidden');
   document.getElementById('rxHintBtn').disabled  = false;
   document.getElementById('rxHintBtn2').disabled = false;
   document.getElementById('rxReplayBtn').disabled = false;
+  document.getElementById('rxDisplay').className = 'morse-display';
 
-  // Show blank display while playing
-  const dispEl = document.getElementById('rxDisplay');
-  dispEl.className = 'morse-display';
+  if (rxState.mode === 'char') {
+    // ── 글자 모드: 랜덤 문자 1개
+    rxState.currentChar = randomChar(getCharPool());
+    rxState.currentWord = null;
+    document.getElementById('rxWordLetters').style.display = 'none';
+    inp.maxLength = 1;
+    inp.placeholder = '?';
+    rxPlay();
+  } else {
+    // ── 단어 모드: WORDS 목록에서 랜덤 단어
+    const pool = getCharPool();
+    // 난이도에 따라 단어 길이 제한
+    let wordPool;
+    if (difficulty === 'easy')      wordPool = WORDS.filter(w => w.length <= 3);
+    else if (difficulty === 'mid')  wordPool = WORDS.filter(w => w.length <= 5);
+    else                            wordPool = WORDS;
+    rxState.currentWord = wordPool[Math.floor(Math.random() * wordPool.length)];
+    rxState.currentChar = null;
+    rxState.wordLetterIdx = 0;
 
-  rxPlay();
+    inp.maxLength = rxState.currentWord.length;
+    inp.placeholder = '?'.repeat(rxState.currentWord.length);
+
+    // 단어 글자 박스 렌더링 (모두 빈칸으로)
+    renderRxWordLetters();
+    document.getElementById('rxWordLetters').style.display = 'flex';
+
+    // 단어 전체를 한 글자씩 차례로 재생
+    rxPlayWord();
+  }
+  inp.focus();
+}
+
+function renderRxWordLetters(revealedCount) {
+  const word = rxState.currentWord;
+  const n    = revealedCount || 0;
+  const container = document.getElementById('rxWordLetters');
+  container.innerHTML = word.split('').map((ch, i) => {
+    let cls = 'word-letter';
+    if (i < n) cls += ' done';
+    return `<div class="${cls}" id="rxwl-${i}">${i < n ? ch : '?'}</div>`;
+  }).join('');
+}
+
+// 단어를 글자별로 순서대로 재생
+function rxPlayWord(startIdx) {
+  const word = rxState.currentWord;
+  if (!word) return;
+  const speed = getSpeed();
+  const dot   = 90 / speed;
+  const dash  = dot * 3;
+  const gap   = dot;
+
+  // 각 글자 사이 간격 (글자 간격 = 3배 gap)
+  const letterGap = dot * 7;   // 글자 간격
+  const wordContainer = document.getElementById('rxSignals');
+  wordContainer.innerHTML = '';
+
+  let t = 0;
+  for (let i = 0; i < word.length; i++) {
+    const ch    = word[i];
+    const morse = MORSE[ch];
+    if (!morse) continue;
+
+    // 글자 인덱스 강조 표시 예약
+    const liIdx = i;
+    setTimeout(() => {
+      document.querySelectorAll('.word-letter').forEach((el, idx) => {
+        el.style.boxShadow = idx === liIdx ? '0 0 12px var(--green)' : '';
+      });
+    }, t);
+
+    // 심볼 재생
+    for (let sym of morse) {
+      const dur = sym === '.' ? dot : dash;
+      const symT = t;
+      setTimeout(() => {
+        beep(dur / 1000, 700);
+        // 신호 시각화: 단일 요소 깜박임
+        wordContainer.innerHTML = `<div class="${sym==='.'?'signal-dot':'signal-dash'} lit"
+          style="opacity:1;box-shadow:0 0 12px var(--green),0 0 24px rgba(57,255,90,0.5)"></div>`;
+        setTimeout(() => { wordContainer.innerHTML = ''; }, dur);
+      }, symT);
+      t += dur + gap;
+    }
+    t += letterGap;  // 글자 간격
+  }
+
+  // 끝나면 박스 강조 제거
+  setTimeout(() => {
+    document.querySelectorAll('.word-letter').forEach(el => el.style.boxShadow = '');
+  }, t);
 }
 
 function rxPlay() {
-  if(!rxState.currentChar) return;
+  if (rxState.mode === 'word') {
+    rxPlayWord();
+    return;
+  }
+  if (!rxState.currentChar) return;
   const morse = MORSE[rxState.currentChar];
   const container = document.getElementById('rxSignals');
   playMorseWithVisual(morse, container, getSpeed());
 }
 
 function rxShowHint() {
-  if(!rxState.currentChar) return;
-  const morse = MORSE[rxState.currentChar];
   const hintBox = document.getElementById('rxHintBox');
-  hintBox.textContent = `▸ 모스부호: ${morse}`;
-  hintBox.classList.remove('hidden');
+  if (rxState.mode === 'char' && rxState.currentChar) {
+    hintBox.textContent = `▸ 모스부호: ${MORSE[rxState.currentChar]}`;
+    hintBox.classList.remove('hidden');
+  } else if (rxState.mode === 'word' && rxState.currentWord) {
+    const morseStr = rxState.currentWord.split('').map(c => MORSE[c] || '?').join('  ');
+    hintBox.innerHTML = `▸ ${rxState.currentWord}: ${morseStr}`;
+    hintBox.classList.remove('hidden');
+  }
 }
 
 function rxCheck(val) {
-  if(!rxState.active || !rxState.currentChar) return;
+  if (!rxState.active) return;
   val = val.toUpperCase().trim();
-  if(!val) return;
+  if (!val) return;
 
-  const correct = rxState.currentChar;
-  const dispEl  = document.getElementById('rxDisplay');
-  const inp     = document.getElementById('rxInput');
-  const fb      = document.getElementById('rxFeedback');
+  const dispEl = document.getElementById('rxDisplay');
+  const inp    = document.getElementById('rxInput');
+  const fb     = document.getElementById('rxFeedback');
 
-  if(val === correct) {
-    rxState.score   += diffPoints();
-    rxState.streak  += 1;
-    rxState.correct += 1;
-    totalScore  += diffPoints();
-    totalStreak += 1;
+  if (rxState.mode === 'char') {
+    // ── 글자 모드
+    if (val.length < 1) return;
+    const correct = rxState.currentChar;
+    const answer  = val[val.length - 1];  // 마지막 입력 글자
 
-    inp.className = 'answer-input correct';
-    dispEl.classList.add('flash-correct');
-    fb.textContent = `✓ 정답! "${correct}" = ${MORSE[correct]}   (+${diffPoints()}점)`;
-    fb.className   = 'feedback ok';
+    if (answer === correct) {
+      rxState.score   += diffPoints();
+      rxState.streak  += 1; rxState.correct += 1;
+      totalScore += diffPoints(); totalStreak += 1;
+      inp.className = 'answer-input correct';
+      dispEl.classList.add('flash-correct');
+      fb.textContent = `✓ 정답! "${correct}" = ${MORSE[correct]}   (+${diffPoints()}점)`;
+      fb.className   = 'feedback ok';
+      setTimeout(() => dispEl.classList.remove('flash-correct'), 500);
+    } else {
+      rxState.score  = Math.max(0, rxState.score - 5);
+      rxState.streak = 0; rxState.wrong += 1; totalStreak = 0;
+      inp.className = 'answer-input wrong';
+      dispEl.classList.add('flash-wrong');
+      fb.textContent = `✗ 오답. 정답은 "${correct}" = ${MORSE[correct]}`;
+      fb.className   = 'feedback err';
+      setTimeout(() => dispEl.classList.remove('flash-wrong'), 500);
+      playMorse(MORSE[correct], 0.7);
+    }
+    updateRxStats(); updateHeaderStats();
+    setTimeout(() => { if (rxState.active) rxNextChar(); }, 1500);
 
-    setTimeout(()=>{ dispEl.classList.remove('flash-correct'); }, 500);
   } else {
-    rxState.score  = Math.max(0, rxState.score - 5);
-    rxState.streak = 0;
-    rxState.wrong += 1;
-    totalStreak = 0;
+    // ── 단어 모드: Enter 키로 제출
+    const correct = rxState.currentWord;
+    if (!correct) return;
 
-    inp.className = 'answer-input wrong';
-    dispEl.classList.add('flash-wrong');
-    fb.textContent = `✗ 오답. 정답은 "${correct}" = ${MORSE[correct]}`;
-    fb.className   = 'feedback err';
-
-    setTimeout(()=>{ dispEl.classList.remove('flash-wrong'); }, 500);
-    playMorse(MORSE[correct], 0.7);
+    if (val === correct) {
+      const pts = diffPoints() * correct.length;
+      rxState.score   += pts;
+      rxState.streak  += 1; rxState.correct += 1;
+      totalScore += pts; totalStreak += 1;
+      inp.className = 'answer-input correct';
+      dispEl.classList.add('flash-correct');
+      fb.textContent = `✓ 정답! "${correct}"   (+${pts}점)`;
+      fb.className   = 'feedback ok';
+      // 모든 글자 정답 표시
+      correct.split('').forEach((ch, i) => {
+        const el = document.getElementById('rxwl-' + i);
+        if (el) { el.textContent = ch; el.classList.add('done'); el.classList.remove('error'); }
+      });
+      setTimeout(() => dispEl.classList.remove('flash-correct'), 500);
+    } else {
+      rxState.score  = Math.max(0, rxState.score - 5);
+      rxState.streak = 0; rxState.wrong += 1; totalStreak = 0;
+      inp.className = 'answer-input wrong';
+      dispEl.classList.add('flash-wrong');
+      // 글자별 맞고 틀림 표시
+      correct.split('').forEach((ch, i) => {
+        const el = document.getElementById('rxwl-' + i);
+        if (!el) return;
+        el.textContent = ch;
+        if (val[i] === ch) { el.classList.add('done'); }
+        else               { el.classList.add('error'); }
+      });
+      fb.textContent = `✗ 오답. 정답: "${correct}"`;
+      fb.className   = 'feedback err';
+      setTimeout(() => dispEl.classList.remove('flash-wrong'), 500);
+    }
+    updateRxStats(); updateHeaderStats();
+    setTimeout(() => { if (rxState.active) rxNextChar(); }, 2000);
   }
-
-  updateRxStats();
-  updateHeaderStats();
-
-  setTimeout(()=>{
-    if(rxState.active) rxNextChar();
-  }, 1500);
 }
 
 function updateRxStats() {
@@ -2005,11 +2301,18 @@ function diffPoints() {
 document.addEventListener('DOMContentLoaded', ()=>{
   const rxInp = document.getElementById('rxInput');
   rxInp.addEventListener('input', e=>{
-    const v = e.target.value;
-    if(v.length >= 1) rxCheck(v[v.length-1]);
+    const v = e.target.value.toUpperCase();
+    rxInp.value = v;
+    // 글자 모드: 1글자 입력되면 바로 체크
+    if (rxState.mode === 'char' && v.length >= 1) rxCheck(v);
+    // 단어 모드: 입력 길이가 목표 단어 길이와 같으면 자동 체크
+    if (rxState.mode === 'word' && rxState.currentWord && v.length >= rxState.currentWord.length) rxCheck(v);
   });
   rxInp.addEventListener('keydown', e=>{
-    if(e.key==='Enter' && rxInp.value) rxCheck(rxInp.value);
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (rxInp.value) rxCheck(rxInp.value);
+    }
   });
 });
 
@@ -2477,123 +2780,216 @@ window.addEventListener('load', ()=>{
 // ════════════════════════════════════════════════════════════
 
 // ── Scenario definitions ──────────────────────────────────
+// ── Random intel generator ───────────────────────────────
+function generateMissionIntel() {
+  const grids    = ['ALPHA 4','BRAVO 7','CHARLIE 2','DELTA 9','ECHO 5','FOXTROT 3','GOLF 8','HOTEL 1'];
+  const gridsKo  = ['알파 4구역','브라보 7구역','찰리 2구역','델타 9구역','에코 5구역','폭스트롯 3구역','골프 8구역','호텔 1구역'];
+
+  const trenchStates    = ['heavily fortified with machine gun nests','lightly defended, roughly 20 troops','abandoned but booby-trapped','reinforced with barbed wire and AT guns','occupied by approximately 50 infantry'];
+  const trenchStatesKo  = ['기관총 진지로 중무장','약 20명 경비, 방어 취약','방치됐으나 부비트랩 설치','철조망 + 대전차포 보강','보병 약 50명 주둔 중'];
+
+  const supplies    = ['critical — less than 2 days remaining','sufficient for 5 days','low on ammunition, food adequate','medical supplies depleted','fuel reserves at 30 percent'];
+  const suppliesKo  = ['위기 — 이틀치 잔여','5일치 충분','탄약 부족, 식량 양호','의약품 고갈','연료 30% 잔여'];
+
+  const readiness   = ['cannot sustain beyond 48 hours','able to hold for 3 days','need immediate resupply to continue','combat effective but stretched thin','requesting withdrawal authorization'];
+  const readinessKo = ['48시간 이상 지속 불가','3일 버틸 수 있음','즉시 보급 필요','전투 가능하나 한계 도달','철수 허가 요청 필요'];
+
+  const survivors   = [12,18,24,7,31,15];
+  const survivorsKo = ['12명','18명','24명','7명','31명','15명'];
+
+  const coords   = ['34N 12E','41N 08E','29N 17E','38N 05E','44N 21E'];
+  const coordsKo = ['북위 34도 동경 12도','북위 41도 동경 08도','북위 29도 동경 17도','북위 38도 동경 05도','북위 44도 동경 21도'];
+
+  const targets    = ['armored column 8 vehicles','infantry company 80 men','supply depot large structure','mortar battery 4 guns','command post fortified'];
+  const targetsKo  = ['기갑 종대 차량 8대','보병 중대 약 80명','대형 보급 창고','박격포 포대 4문','요새화된 지휘소'];
+
+  const locations    = ['warehouse district sector 7','railway junction north of town','farmhouse 3km past river','church tower overlooking square','underground bunker east road'];
+  const locationsKo  = ['창고 지구 섹터 7','마을 북쪽 철도 교차점','강 건너 3km 농가','광장 내려다보는 교회 탑','동쪽 도로 지하 벙커'];
+
+  const risk    = ['exposure risk high, patrol nearby','secure for now, 10 minutes','compromised, need extraction now','minimal risk, all clear'];
+  const riskKo  = ['위험 — 적 순찰대 근접','현재 안전, 10분 여유','노출됨, 즉시 탈출 필요','위험 없음, 이상 없음'];
+
+  const exits    = ['Route BRAVO via river crossing','Route DELTA through forest','Route ALPHA northeast checkpoint','submarine rendezvous at cove'];
+  const exitsKo  = ['루트 BRAVO — 강 도하','루트 DELTA — 숲 통과','루트 ALPHA — 북동 체크포인트','후미 해안 잠수함 랑데부'];
+
+  const pick = (arr, ko) => {
+    const i = Math.floor(Math.random() * arr.length);
+    return { en: arr[i], ko: ko[i] };
+  };
+
+  const g = pick(grids, gridsKo);
+  const tr = pick(trenchStates, trenchStatesKo);
+  const su = pick(supplies, suppliesKo);
+  const re = pick(readiness, readinessKo);
+  const sv = pick(survivors, survivorsKo);
+  const co = pick(coords, coordsKo);
+  const tg = pick(targets, targetsKo);
+  const lo = pick(locations, locationsKo);
+  const ri = pick(risk, riskKo);
+  const ex = pick(exits, exitsKo);
+
+  return {
+    grid: g.en,       gridKo: g.ko,
+    trenchState: tr.en, trenchStateKo: tr.ko,
+    supplyStatus: su.en, supplyStatusKo: su.ko,
+    combatReadiness: re.en, combatReadinessKo: re.ko,
+    survivorCount: sv.en, survivorCountKo: sv.ko,
+    coord: co.en,     coordKo: co.ko,
+    target: tg.en,    targetKo: tg.ko,
+    location: lo.en,  locationKo: lo.ko,
+    exposureRisk: ri.en, exposureRiskKo: ri.ko,
+    exitRoute: ex.en,    exitRouteKo: ex.ko
+  };
+}
+
 const SCENARIOS = [
   {
     id: 'recon',
     icon: '🔭',
     title: '전방 정찰 보고',
     callsign: 'OVERLORD',
-    desc: '전방 참호를 정찰하고 돌아온 당신. 사령부에 보급 현황과 적 참호 관찰 결과를 보고해야 합니다.',
+    desc: '전방 참호를 정찰하고 돌아온 당신. 사령부 OVERLORD에게 세 가지를 보고해야 합니다.',
     objectives: [
       '적 참호 관찰 결과 보고',
       '아군 보급 현황 보고',
-      '전투 지속 가능 여부 전달'
+      '아군 전투 지속 가능 여부 전달'
     ],
-    systemPrompt: `You are OVERLORD, a stern naval/military commanding officer communicating via Morse code radio in WWII-era setting.
-The year is 1944, Western Front. The player is a field scout who has just returned from reconnaissance.
-You need to receive THREE pieces of intel from the player: 1) enemy trench observations, 2) supply status, 3) combat readiness.
+    buildPrompt: (intel) => `You are OVERLORD, a commanding officer. Radio comms, WWII 1944 Western Front.
+YOUR SCOUT (the player) just returned from enemy recon. You need 3 reports FROM THE PLAYER about OUR OWN SIDE:
+1) What the player OBSERVED at the ENEMY trench (location: grid ${intel.grid})
+2) OUR OWN supply status (actual status: ${intel.supplyStatus})
+3) OUR OWN combat readiness / can we keep fighting (actual: ${intel.combatReadiness})
 
-Rules:
-- Speak in short, military-style sentences (max 2 sentences per message). Use NATO phonetic alphabet naturally.
-- ALL responses MUST be in ENGLISH only (this is morse code, english only).
-- Ask about one thing at a time. Start by identifying the player and asking for their report.
-- When you have received all three intel items clearly, conclude the mission with: "GOOD WORK. MISSION COMPLETE. RETURN TO BASE. OVER AND OUT."
-- If the player's message is unclear or incomplete, ask for clarification once.
-- Judge mission completion based on receiving substantive info about all 3 objectives.
-- Keep each message under 25 words.
-- RESPONSE FORMAT: just the radio message text, no quotes, no labels.
-- Current mission_complete: false. Set to true in your final closing message only.`
+CRITICAL RULES:
+- You are asking the PLAYER (scout) to report to YOU. Do NOT ask about enemy supplies or enemy readiness.
+- The player must volunteer the intel. You ask for it one item at a time.
+- Max 10 words per response. Military brevity. No pleasantries.
+- English only (morse code).
+- Start: identify the player's callsign, then ask for their trench observation report.
+- When all 3 received, say exactly: "ROGER. MISSION COMPLETE. RETURN TO BASE. OUT"
+- Response format: plain radio text only, no labels, no quotes.`
   },
   {
     id: 'rescue',
     icon: '🚑',
     title: '조난 구조 요청',
     callsign: 'SEA-WOLF',
-    desc: '구축함이 피격당해 침몰 중입니다. 해안 기지에 구조 요청을 보내고 위치, 생존자 수, 상황을 전달해야 합니다.',
+    desc: '구축함이 피격당해 침몰 중입니다. 해안기지에 세 가지 정보를 전달해야 합니다.',
     objectives: [
-      '함선 위치/좌표 전달',
-      '생존자 수 및 부상자 현황 보고',
-      '긴급도 및 구조 요청 확인'
+      '함선 위치 좌표 전달',
+      '생존자/부상자 현황 보고',
+      '긴급 구조 요청 확인'
     ],
-    systemPrompt: `You are the SEA-WOLF, a coastal rescue station operator. WWII naval setting, 1943 Pacific.
-A damaged destroyer is calling for rescue. You need to receive: 1) ship position/coordinates, 2) survivor count and casualties, 3) urgency level and confirmation.
+    buildPrompt: (intel) => `You are SEA-WOLF, coastal rescue operator. WWII 1943 Pacific.
+A damaged destroyer is calling. You need from the player:
+1) Ship position (actual: coordinates ${intel.coord})
+2) Survivor count and casualties (actual: ${intel.survivorCount} survivors)
+3) Urgency confirmation and rescue request
 
-Rules:
-- Speak in short urgent naval/rescue style. Max 2 sentences.
-- ALL responses MUST be in ENGLISH only.
-- Respond with urgency. Acknowledge each piece of information received.
-- Ask for each piece of info systematically.
-- When you have received all 3 pieces of intel clearly, close with: "RESCUE TEAM DISPATCHED. HOLD POSITION. MISSION COMPLETE. OUT."
-- Keep messages under 25 words.
-- RESPONSE FORMAT: just the radio message, no quotes, no labels.`
+CRITICAL RULES:
+- Max 10 words per message. Naval brevity codes.
+- English only.
+- Acknowledge each item received before asking next.
+- When all 3 received: "RESCUE DISPATCHED. HOLD POSITION. MISSION COMPLETE. OUT"
+- Response format: plain radio text only.`
   },
   {
     id: 'artillery',
     icon: '💣',
     title: '포격 좌표 유도',
     callsign: 'THUNDER-1',
-    desc: '전방 관측병으로서 포병 부대에 적 집결지 좌표와 사격 수정을 전달해야 합니다.',
+    desc: '전방 관측병으로서 포병대에 세 가지 정보를 전달해야 합니다.',
     objectives: [
       '목표 좌표 전달',
-      '목표물 특성 (규모/종류) 보고',
-      '사격 결과 관측 및 수정 지시'
+      '목표물 특성 보고',
+      '사격 결과 관측 및 수정'
     ],
-    systemPrompt: `You are THUNDER-1, an artillery battery commander awaiting fire direction. WWII, 1944 Normandy.
-A forward observer needs to give you: 1) target coordinates, 2) target description (size/type), 3) fire adjustment after first salvo.
+    buildPrompt: (intel) => `You are THUNDER-1, artillery battery commander. WWII 1944 Normandy.
+Forward observer (player) must give you:
+1) Target grid coordinates (actual: ${intel.grid})
+2) Target description (actual: ${intel.target})
+3) Fire adjustment after first salvo
 
-Rules:
-- Military artillery procedure language. Short, precise. Max 2 sentences.
-- ALL responses MUST be in ENGLISH only.
-- Acknowledge grid references and data as received. Ask for next piece systematically.
-- When you have all 3 and observer confirms mission complete, end with: "FIRE MISSION COMPLETE. WELL DONE OBSERVER. OUT."
-- Keep messages under 25 words.
-- RESPONSE FORMAT: just the message, no quotes.`
+CRITICAL RULES:
+- Max 10 words. Artillery procedure brevity.
+- English only.
+- Use "SHOT, OVER" and "SPLASH, OVER" procedure naturally.
+- When all 3 received and adjusted: "FIRE MISSION COMPLETE. OUT"
+- Response format: plain radio text only.`
   },
   {
     id: 'spy',
     icon: '🕵️',
     title: '적진 침투 보고',
     callsign: 'NIGHTSHADE',
-    desc: '적지에 침투한 첩보원입니다. 런던 본부에 작전 현황, 목표물 위치, 탈출 루트를 타전해야 합니다.',
+    desc: '적지에 침투한 첩보원입니다. 런던 본부에 세 가지를 타전해야 합니다.',
     objectives: [
-      '목표물 위치 파악 여부 확인',
-      '현재 작전 상황 및 노출 위험도 보고',
-      '탈출 루트 및 픽업 지점 전달'
+      '목표물 위치 확인 보고',
+      '노출 위험도 및 작전 상황',
+      '탈출 루트 및 픽업 지점'
     ],
-    systemPrompt: `You are NIGHTSHADE, an SOE handler in London. WWII 1943. A field agent has infiltrated enemy territory and is sending intel via morse code.
-You need: 1) target location confirmed, 2) operational status and exposure risk, 3) exfiltration route and pickup point.
+    buildPrompt: (intel) => `You are NIGHTSHADE, SOE London handler. WWII 1943.
+Field agent (player) must transmit:
+1) Target location confirmed (actual: ${intel.location})
+2) Exposure risk and operational status (actual: ${intel.exposureRisk})
+3) Exfiltration route and pickup point (actual: ${intel.exitRoute})
 
-Rules:
-- Terse, coded spy-radio style. Professional but tense. Max 2 sentences.
-- ALL responses MUST be in ENGLISH only.
-- Acknowledge each piece, show urgency about transmission security.
-- Occasionally remind agent to keep it brief (security).
-- When all 3 objectives received clearly, close: "UNDERSTOOD. EXTRACTION ARRANGED. GO DARK. MISSION COMPLETE."
-- Keep messages under 25 words.
-- RESPONSE FORMAT: just the message, no quotes.`
+CRITICAL RULES:
+- Max 10 words. Spy radio terse codes.
+- English only. Transmission security is critical.
+- Acknowledge each item, then ask for next.
+- Remind brevity once if player is too verbose.
+- When all 3 received: "UNDERSTOOD. EXTRACTION ARRANGED. GO DARK. MISSION COMPLETE."
+- Response format: plain radio text only.`
   }
 ];
 
+// ── 시나리오별 Intel Panel 정의 ──────────────────────────
+SCENARIOS[0].buildIntelPanel = (intel) => [
+  { label: '적 참호 위치',   value: intel.gridKo,            en: intel.grid,            hint: '이 그리드 위치를 보고하세요' },
+  { label: '적 참호 상태',   value: intel.trenchStateKo,     en: intel.trenchState,     hint: '관찰한 적 참호 상태를 설명하세요' },
+  { label: '아군 보급 현황', value: intel.supplyStatusKo,    en: intel.supplyStatus,    hint: '우리 보급 상태를 보고하세요' },
+  { label: '전투 지속 가능', value: intel.combatReadinessKo, en: intel.combatReadiness, hint: '우리 전투 지속 가능 여부를 보고하세요' }
+];
+SCENARIOS[1].buildIntelPanel = (intel) => [
+  { label: '함선 좌표',  value: intel.coordKo,                          en: intel.coord,                          hint: '이 좌표를 타전하세요' },
+  { label: '생존자 수',  value: intel.survivorCountKo + ' 생존',         en: intel.survivorCount + ' survivors',    hint: '생존자 수를 보고하세요' },
+  { label: '구조 요청',  value: '침몰 위기 — 즉각 구조 필요',             en: 'sinking, immediate rescue needed',    hint: '긴급 구조를 요청하세요' }
+];
+SCENARIOS[2].buildIntelPanel = (intel) => [
+  { label: '목표 그리드', value: intel.gridKo,    en: intel.grid,    hint: '이 좌표를 포병대에 전달하세요' },
+  { label: '목표물 종류', value: intel.targetKo,  en: intel.target,  hint: '목표물 특성을 설명하세요' },
+  { label: '사격 수정',   value: '첫 포격 후 탄착 관측 → 수정 지시', en: 'report adjustment after first salvo', hint: '탄착점 보고 후 수정 명령하세요' }
+];
+SCENARIOS[3].buildIntelPanel = (intel) => [
+  { label: '목표물 위치', value: intel.locationKo,    en: intel.location,    hint: '목표 위치를 보고하세요' },
+  { label: '노출 위험도', value: intel.exposureRiskKo, en: intel.exposureRisk, hint: '현재 상황을 보고하세요' },
+  { label: '탈출 루트',   value: intel.exitRouteKo,   en: intel.exitRoute,   hint: '탈출 경로를 전달하세요' }
+];
 // ── State ────────────────────────────────────────────────
 let scState = {
   apiKey: '',
   selectedScenario: null,
   selectedIdx: -1,
-  phase: 'apikey',      // apikey | select | comms
+  phase: 'apikey',
   conversationHistory: [],
   currentMorse: '',
   keyDown: false,
   keyDownTime: null,
   dotThreshold: 200,
   wordTimerHandle: null,
-  wordTimerDelay: 800,  // ms silence → confirm letter
-  completedChars: [],   // confirmed chars in current word
-  completedWords: [],   // confirmed words in sentence
+  wordTimerDelay: 400,
+  completedChars: [],
+  completedWords: [],
   lastAiMorse: '',
   lastAiText: '',
   missionProgress: 0,
   missionDone: false,
-  waiting: false        // waiting for AI response
+  waiting: false,
+  diagnosedModel: null,
+  currentIntel: null,       // 이번 회차 랜덤 intel
+  customScenarios: [],      // 플레이어가 만든 시나리오
+  objChecked: []            // 목표 체크 상태 추적
 };
 
 // ── Navigation init ──────────────────────────────────────
@@ -2607,10 +3003,12 @@ function scInit() {
 }
 
 function showScStep(step) {
-  document.getElementById('sc-step-apikey').classList.add('hidden');
-  document.getElementById('sc-step-select').classList.add('hidden');
-  document.getElementById('sc-step-comms').classList.add('hidden');
-  document.getElementById('sc-step-' + step).classList.remove('hidden');
+  ['apikey','select','comms','creator'].forEach(s => {
+    const el = document.getElementById('sc-step-' + s);
+    if (el) el.classList.add('hidden');
+  });
+  const target = document.getElementById('sc-step-' + step);
+  if (target) target.classList.remove('hidden');
   scState.phase = step;
 }
 
@@ -2632,11 +3030,167 @@ function scChangeApiKey() {
   showScStep('apikey');
 }
 
+function showScenarioCreator() {
+  showScStep('creator');
+  document.getElementById('scCreatorInput').value = '';
+  document.getElementById('scCreatorStatus').textContent = '';
+}
+
+function scCancelCreator() {
+  showScStep('select');
+}
+
+async function scCreateScenario() {
+  const userDesc = document.getElementById('scCreatorInput').value.trim();
+  if (!userDesc) { alert('상황을 입력해주세요'); return; }
+
+  const statusEl = document.getElementById('scCreatorStatus');
+  const btn = document.getElementById('scCreateBtn');
+  statusEl.textContent = 'AI가 시나리오를 생성 중입니다...';
+  btn.disabled = true;
+
+  const creatorPrompt = `You are a game designer creating a military/naval WWII-era radio communication scenario for a Morse code training game.
+
+The user described this situation in Korean: "${userDesc}"
+
+Create a scenario with this EXACT JSON format. Output raw JSON only — no markdown, no backticks, no explanation:
+{
+  "icon": "<one emoji fitting the scenario>",
+  "titleKo": "<시나리오 제목, 한국어 10자 이내>",
+  "descKo": "<상황 설명, 한국어 60자 이내>",
+  "callsign": "<radio callsign 1-2 English words>",
+  "objectivesKo": ["<목표1 한국어>", "<목표2 한국어>", "<목표3 한국어>"],
+  "intelItems": [
+    {
+      "labelKo": "<정보 항목 이름, 한국어 8자 이내>",
+      "valueKo": "<플레이어가 전달해야 할 구체적 정보값, 한국어. 예: 북위 37도 동경 126도, 생존자 14명, 연료 20% 등>",
+      "valueEn": "<same info in English, for morse transmission. Short: e.g. 37N 126E, 14 survivors, fuel 20 percent>",
+      "hintKo": "<이 정보를 어떻게 보내야 하는지 힌트, 한국어>"
+    },
+    { "labelKo": "...", "valueKo": "...", "valueEn": "...", "hintKo": "..." },
+    { "labelKo": "...", "valueKo": "...", "valueEn": "...", "hintKo": "..." }
+  ],
+  "systemPromptEn": "You are [callsign], [role]. [Setting]. Player must report 3 items: 1) [item1 description, mention actual value: VALUEPLACEHOLDER_1], 2) [item2], 3) [item3]. RULES: max 10 words per message. English only. Ask one item at a time. When all 3 received say: MISSION COMPLETE OUT"
+}
+
+Important: intelItems must have exactly 3 items matching the 3 objectives. The valueEn must be short enough to transmit in morse (under 6 words).`;
+
+  try {
+    const MODELS = ['gemini-1.5-flash','gemini-1.5-flash-latest','gemini-1.5-flash-001','gemini-1.0-pro','gemini-pro'];
+    const tryModels = scState.diagnosedModel
+      ? [scState.diagnosedModel, ...MODELS] : MODELS;
+
+    let res = null;
+    for (const m of tryModels) {
+      res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${scState.apiKey}`,
+        {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            contents: [{ role:'user', parts:[{ text: creatorPrompt }] }]
+          })
+        }
+      );
+      if (res.ok) { scState.diagnosedModel = m; break; }
+      res = null;
+    }
+    if (!res) throw new Error('사용 가능한 모델 없음');
+
+    const data = await res.json();
+    let raw = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+    // JSON 파싱
+    raw = raw.replace(/```json/g,'').replace(/```/g,'').trim();
+    const sc = JSON.parse(raw);
+
+    // intelItems를 buildIntelPanel 함수로 변환
+    const intelItems = sc.intelItems || [];
+    const intelPanelFn = intelItems.length > 0
+      ? (_intel) => intelItems.map(item => ({
+          label: item.labelKo,
+          value: item.valueKo,
+          en:    item.valueEn,
+          hint:  item.hintKo
+        }))
+      : null;
+
+    // systemPrompt에서 VALUEPLACEHOLDER를 실제 값으로 치환
+    let finalPrompt = sc.systemPromptEn || '';
+    intelItems.forEach((item, i) => {
+      finalPrompt = finalPrompt.replace('VALUEPLACEHOLDER_' + (i+1), item.valueEn);
+    });
+
+    // 커스텀 시나리오 객체로 변환
+    const newScenario = {
+      id: 'custom_' + Date.now(),
+      icon: sc.icon || '🎖️',
+      title: sc.titleKo,
+      callsign: sc.callsign,
+      desc: sc.descKo,
+      objectives: sc.objectivesKo,
+      buildPrompt: (_intel) => finalPrompt,
+      buildIntelPanel: intelPanelFn
+    };
+
+    scState.customScenarios.push(newScenario);
+    statusEl.textContent = '✓ 시나리오 생성 완료!';
+
+    setTimeout(() => {
+      showScStep('select');
+      buildScenarioCards();
+      // 방금 만든 카드 자동 선택
+      const idx = SCENARIOS.length + scState.customScenarios.length - 1;
+      selectScenario(idx);
+    }, 800);
+
+  } catch(e) {
+    statusEl.textContent = '⚠ 오류: ' + e.message;
+    btn.disabled = false;
+  }
+}
+
+async function scDiagnoseKey() {
+  const key = document.getElementById('scApiKey').value.trim();
+  if (!key) { alert('먼저 API 키를 입력하세요'); return; }
+  const diagEl = document.getElementById('scDiagResult');
+  diagEl.textContent = '조회 중...';
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`
+    );
+    if (!res.ok) {
+      const err = await res.json();
+      diagEl.textContent = '오류: ' + (err.error?.message || res.status);
+      return;
+    }
+    const data = await res.json();
+    const models = (data.models || [])
+      .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
+      .map(m => m.name.replace('models/', ''));
+
+    if (models.length === 0) {
+      diagEl.textContent = '⚠ generateContent 지원 모델 없음\n결제 설정 또는 API 활성화 필요';
+    } else {
+      diagEl.innerHTML = '✓ 사용 가능한 모델:<br>' + models.map(m => '  · ' + m).join('<br>');
+      // 첫 번째 flash 모델 자동 선택
+      const flashModel = models.find(m => m.includes('flash')) || models[0];
+      scState.diagnosedModel = flashModel;
+      diagEl.innerHTML += '<br><br>▸ 자동 선택: <strong style="color:var(--green)">' + flashModel + '</strong>';
+    }
+  } catch(e) {
+    diagEl.textContent = '네트워크 오류: ' + e.message;
+  }
+}
+
 // ── Scenario select ──────────────────────────────────────
 function buildScenarioCards() {
   const container = document.getElementById('scCards');
   container.innerHTML = '';
-  SCENARIOS.forEach((sc, i) => {
+
+  // 기본 시나리오
+  const allScenarios = [...SCENARIOS, ...scState.customScenarios];
+  allScenarios.forEach((sc, i) => {
     const card = document.createElement('div');
     card.className = 'scenario-card';
     card.id = 'sc-card-' + i;
@@ -2649,13 +3203,27 @@ function buildScenarioCards() {
     card.onclick = () => selectScenario(i);
     container.appendChild(card);
   });
+
+  // 커스텀 시나리오 만들기 카드
+  const addCard = document.createElement('div');
+  addCard.className = 'scenario-card';
+  addCard.style.borderStyle = 'dashed';
+  addCard.innerHTML = `
+    <div class="sc-icon">✏️</div>
+    <div class="sc-title">나만의 시나리오 만들기</div>
+    <div class="sc-desc">상황을 자유롭게 입력하면 AI가 시나리오를 생성해줍니다</div>
+    <div class="sc-obj">한국어로 상황을 입력하세요</div>
+  `;
+  addCard.onclick = () => showScenarioCreator();
+  container.appendChild(addCard);
 }
 
 function selectScenario(idx) {
   document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected'));
   document.getElementById('sc-card-' + idx).classList.add('selected');
   scState.selectedIdx = idx;
-  scState.selectedScenario = SCENARIOS[idx];
+  const allScenarios = [...SCENARIOS, ...scState.customScenarios];
+  scState.selectedScenario = allScenarios[idx];
   document.getElementById('scStartBtn').disabled = false;
 }
 
@@ -2663,6 +3231,10 @@ function selectScenario(idx) {
 async function scBeginMission() {
   const sc = scState.selectedScenario;
   if (!sc) return;
+
+  // 이번 회차 랜덤 intel 생성
+  scState.currentIntel = generateMissionIntel();
+  scState.objChecked = new Array(sc.objectives.length).fill(false);
 
   // Reset state
   scState.conversationHistory = [];
@@ -2683,6 +3255,8 @@ async function scBeginMission() {
   clearMsgLog();
   scAddMsg('system', null, '암호 통신 개시. 교신 대기 중...');
   clearTxUI();
+  intelPanelOpen = true;
+  renderIntelPanel();
   document.getElementById('scSendBtn').disabled = true;
 
   showScStep('comms');
@@ -2703,23 +3277,61 @@ function scBeginMissionAgain() {
 // ── Objectives UI ─────────────────────────────────────────
 function buildObjectives() {
   const sc = scState.selectedScenario;
+  scState.objChecked = new Array(sc.objectives.length).fill(false);
   const el = document.getElementById('scObjectives');
   el.innerHTML = '<div style="font-size:0.65rem;letter-spacing:0.15em;margin-bottom:6px;color:rgba(255,179,0,0.6);">▸ 임무 목표</div>' +
     sc.objectives.map((obj, i) =>
       `<div class="obj-item" id="obj-${i}">
-        <span class="obj-pending" id="obj-icon-${i}">○</span>
-        <span id="obj-text-${i}">${obj}</span>
+        <span class="obj-pending" id="obj-icon-${i}" style="color:var(--text-dim)">○</span>
+        <span id="obj-text-${i}" style="color:var(--text-dim)">${obj}</span>
       </div>`
     ).join('');
 }
 
+function renderIntelPanel() {
+  const sc     = scState.selectedScenario;
+  const intel  = scState.currentIntel;
+  const panel  = document.getElementById('scIntelPanel');
+  const rows   = document.getElementById('scIntelRows');
+
+  if (!sc || !intel || !sc.buildIntelPanel) {
+    panel.style.display = 'none';
+    return;
+  }
+
+  const items = sc.buildIntelPanel(intel);
+  panel.style.display = 'block';
+  rows.innerHTML = items.map(item => `
+    <div class="intel-row">
+      <span class="intel-label">${item.label}</span>
+      <span class="intel-value">${item.value}
+        <span class="intel-en">(${item.en})</span>
+      </span>
+      <span class="intel-hint">${item.hint}</span>
+    </div>
+  `).join('');
+}
+
+let intelPanelOpen = true;
+function toggleIntelPanel() {
+  const rows = document.getElementById('scIntelRows');
+  const icon = document.getElementById('scIntelToggleIcon');
+  intelPanelOpen = !intelPanelOpen;
+  rows.style.display = intelPanelOpen ? 'block' : 'none';
+  icon.textContent   = intelPanelOpen ? '▾' : '▸';
+}
+
 function completeObjective(idx) {
+  if (scState.objChecked[idx]) return;  // 이미 체크됐으면 무시
+  scState.objChecked[idx] = true;
   const icon = document.getElementById('obj-icon-' + idx);
-  if (icon && !icon.classList.contains('obj-check')) {
+  const text = document.getElementById('obj-text-' + idx);
+  if (icon) {
     icon.className = 'obj-check';
     icon.textContent = '✓';
-    document.getElementById('obj-text-' + idx).style.color = 'var(--green)';
+    icon.style.color = 'var(--green)';
   }
+  if (text) text.style.color = 'var(--green)';
 }
 
 function setProgress(pct) {
@@ -2774,22 +3386,65 @@ async function scGetAiResponse(playerMessage) {
     });
   }
 
-  const payload = {
-    system_instruction: { parts: [{ text: scState.selectedScenario.systemPrompt }] },
-    contents: scState.conversationHistory.length > 0
-      ? scState.conversationHistory
-      : [{ role: 'user', parts: [{ text: '[BEGIN TRANSMISSION - Make first contact]' }] }]
+  // system prompt를 첫 번째 user 메시지로 주입
+  // 시나리오에 따라 systemPrompt 또는 buildPrompt(intel) 사용
+  const sc = scState.selectedScenario;
+  const promptText = sc.buildPrompt
+    ? sc.buildPrompt(scState.currentIntel || generateMissionIntel())
+    : sc.systemPrompt;
+  const systemMsg = {
+    role: 'user',
+    parts: [{ text: promptText }]
+  };
+  const systemAck = {
+    role: 'model',
+    parts: [{ text: 'Understood. Ready to begin transmission.' }]
   };
 
+  let contents;
+  if (scState.conversationHistory.length > 0) {
+    contents = [systemMsg, systemAck, ...scState.conversationHistory];
+  } else {
+    contents = [
+      systemMsg,
+      systemAck,
+      { role: 'user', parts: [{ text: '[BEGIN TRANSMISSION - Make first contact]' }] }
+    ];
+  }
+
+  const payload = { contents };
+
   try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${scState.apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+    // 진단된 모델 우선, 없으면 순서대로 시도
+    const MODELS_TO_TRY = scState.diagnosedModel
+      ? [scState.diagnosedModel, 'gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash-001', 'gemini-1.0-pro', 'gemini-pro']
+      : ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash-001', 'gemini-1.0-pro', 'gemini-pro'];
+
+    let res = null;
+    let lastErr = '';
+    for (const modelName of MODELS_TO_TRY) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${scState.apiKey}`;
+      try {
+        res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          console.log('사용 모델:', modelName);
+          scState.activeModel = modelName;
+          break;
+        }
+        const errBody = await res.clone().json();
+        lastErr = errBody.error?.message || res.status;
+        // 404(not found)면 다음 모델 시도, 다른 오류면 중단
+        if (!lastErr.includes('not found') && !lastErr.includes('not supported')) break;
+        res = null;
+      } catch(fetchErr) {
+        lastErr = fetchErr.message;
       }
-    );
+    }
+    if (!res) throw new Error('사용 가능한 모델 없음: ' + lastErr);
 
     if (!res.ok) {
       const err = await res.json();
@@ -2916,33 +3571,47 @@ async function scPlayAiMorse(text, isFinal) {
 function playMorseWithVisualAsync(morseStr, container, speed) {
   return new Promise(resolve => {
     container.innerHTML = '';
-    const segs = [];
-    for (let ch of morseStr) {
-      if (ch === '.' || ch === '-') segs.push(ch);
-    }
-    segs.forEach(s => {
-      const el = document.createElement('div');
-      el.className = s === '.' ? 'sw-dot' : 'sw-dash';
-      container.appendChild(el);
-    });
 
+    const MAX_SLOTS = 14;  // 가로에 표시할 최대 슬롯 수
     const dot  = 90 / speed;
     const dash = dot * 3;
     const gap  = dot;
 
+    // 슬롯 미리 생성
+    for (let i = 0; i < MAX_SLOTS; i++) {
+      const el = document.createElement('div');
+      el.className = 'sw-dot';  // 기본값, 나중에 변경
+      el.style.opacity = '0';
+      container.appendChild(el);
+    }
+
+    // 심볼 시퀀스 수집
+    const segs = [];
+    for (let ch of morseStr) {
+      if (ch === '.' || ch === '-') segs.push(ch);
+    }
+
     let t = 0;
-    let si = 0;
+    let si = 0;  // 전체 심볼 카운터
     for (let ch of morseStr) {
       if (ch === '.' || ch === '-') {
-        const idx = si;
+        const symIdx = si;
         const dur = ch === '.' ? dot : dash;
         setTimeout(() => {
-          const el = container.children[idx];
+          const slotIdx = symIdx % MAX_SLOTS;  // 롤링: 넘으면 처음부터
+          const el = container.children[slotIdx];
           if (el) {
+            // 모든 슬롯 초기화 후 현재 슬롯만 켜기
+            // (현재 슬롯만 바꿔서 깜박임 효과)
+            el.className = ch === '.' ? 'sw-dot' : 'sw-dash';
+            el.style.opacity = '1';
             el.classList.add('on');
             if (ch === '.') beep(dot / 1000, 700);
             else            beep(dash / 1000, 700);
-            setTimeout(() => el.classList.remove('on'), dur);
+            setTimeout(() => {
+              el.classList.remove('on');
+              el.style.opacity = '0.15';  // 흔적 희미하게 남김
+            }, dur);
           }
         }, t);
         t += dur + gap;
