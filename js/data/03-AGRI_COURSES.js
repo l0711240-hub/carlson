@@ -1,0 +1,28 @@
+const AGRI_COURSES = [
+  // 필수 (고정 픽순)
+  {code:"M2649.001300", name:"교육학개론", credit:3, category:"agri", type:"required_agri", semester:[1], recPick:1},
+  {code:"M2649.001400", name:"교육과정", credit:3, category:"agri", type:"required_agri", semester:[2], recPick:1},
+  {code:"M2649.001600", name:"교육심리", credit:3, category:"agri", type:"required_agri", semester:[2]},
+  {code:"M1683.000400", name:"교육방법 및 교육공학", credit:3, category:"agri", type:"required_agri", semester:[1]},
+  {code:"5202.202", name:"교육사회", credit:3, category:"agri", type:"required_agri", semester:[2]},
+  {code:"5202.205", name:"교육평가", credit:3, category:"agri", type:"required_agri", semester:[1], recPick:3},
+  {code:"5202.415", name:"교육행정 및 교육경영", credit:3, category:"agri", type:"required_agri", semester:[2]},
+  // 선택
+  {code:"M2649.001100", name:"교육철학 및 교육사", credit:3, category:"agri", type:"normal", semester:[1], recPick:2},
+  {code:"M2649.001200", name:"특수교육학개론", credit:3, category:"agri", type:"normal", semester:[2], recPick:2},
+  {code:"500.165", name:"디지털교육", credit:3, category:"agri", type:"normal", semester:[1]},
+  {code:"5202.203A", name:"학교폭력 예방 및 학생의 이해", credit:3, category:"agri", type:"normal", semester:[1]},
+  {code:"M3321.000400", name:"교직실무", credit:3, category:"agri", type:"normal", semester:[1]},
+  {code:"5202.301", name:"교육봉사활동 1", credit:3, category:"agri", type:"normal", semester:[2]},
+  {code:"5202.206", name:"교육봉사활동 2", credit:3, category:"agri", type:"normal", semester:[2]},
+  {code:"M3321.000200", name:"교육실습(참관)", credit:3, category:"agri", type:"normal", semester:[2]},
+  {code:"5202.309", name:"사회 변화와 교사 역량", credit:3, category:"agri", type:"normal", semester:[2]},
+  {code:"M1683.001100", name:"AIDT의 이해와 학습데이터 분석", credit:3, category:"agri", type:"normal", semester:[2]},
+  {code:"5202.409", name:"학생 상담과 생활지도", credit:3, category:"agri", type:"normal", semester:[2]},
+  {code:"M1686.000100", name:"교과 논술 지도", credit:3, category:"agri", type:"normal", semester:[1]},
+  {code:"5202.410", name:"수업 시연 연습", credit:3, category:"agri", type:"normal", semester:[1]},
+  {code:"5202.405", name:"임용 전공 스터디", credit:3, category:"agri", type:"normal", semester:[1]},
+  {code:"5202.411", name:"임용 교육학 스터디", credit:3, category:"agri", type:"normal", semester:[1]},
+  {code:"5202.414", name:"모의수업 워크숍", credit:3, category:"agri", type:"normal", semester:[1]},
+  {code:"M1683.001000", name:"교생실습 준비", credit:3, category:"agri", type:"normal", semester:[2]},
+];
