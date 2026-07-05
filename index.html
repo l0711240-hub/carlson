@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사회교육과 먹이사슬</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div id="header">
+  <h1>🎓 사회교육과 먹이사슬</h1>
+  <div class="stat-bar">
+    <div class="stat"><span class="label">학년</span><span class="val" id="h-year">1학년</span></div>
+    <div class="stat"><span class="label">직급</span><span class="val" id="h-rank">학부생</span></div>
+    <div class="stat"><span class="label">학점</span><span class="val" id="h-credits">0/130</span></div>
+    <div class="stat"><span class="label">교양</span><span class="val" id="h-liberal">0/36</span></div>
+    <div class="stat"><span class="label">전공</span><span class="val" id="h-major">0</span></div>
+    <div class="stat"><span class="label">GPA</span><span class="val" id="h-gpa">-</span></div>
+    <div class="stat"><span class="label">포인트</span><span class="val" id="h-points">0</span></div>
+    <div class="stat"><span class="label">복수전공</span><span class="val" id="h-double">-</span></div>
+  </div>
+  <button id="debug-btn" onclick="toggleDebug()"
+    style="background:#ef4444;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:10px;font-family:'Black Han Sans',sans-serif;cursor:pointer;flex-shrink:0;opacity:0.7"
+    title="A: 전체디버그 / B: 학부만 디버그 (클릭으로 순환)">
+    🐛 DEBUG OFF
+  </button>
+</div>
+
+<div id="main">
+  <div id="canvas-container">
+    <canvas id="gameCanvas"></canvas>
+    <div id="year-indicator">🕐 <span id="year-text">1학년 1학기</span></div>
+    <div id="controls-hint">WASD / 방향키로 이동 | 부딪히면 자동 상호작용</div>
+  </div>
+  <div id="sidebar">
+    <div id="player-info">
+      <div class="player-title rank-student" id="rank-display">학부생</div>
+      <div style="font-family:'Black Han Sans',sans-serif;font-size:18px;margin:2px 0;" id="gpa-display">GPA: -</div>
+      <div class="progress-row" id="stamina-row">
+        <span class="progress-label">스태미나</span>
+        <div class="progress-bar"><div class="progress-fill" id="prog-stamina" style="width:100%;background:#22c55e"></div></div>
+        <span class="progress-val" id="val-stamina">100/100</span>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">총학점</span>
+        <div class="progress-bar"><div class="progress-fill" id="prog-credits" style="width:0%"></div></div>
+        <span class="progress-val" id="val-credits">0/130</span>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">교양</span>
+        <div class="progress-bar"><div class="progress-fill" id="prog-liberal" style="width:0%;background:#f472b6"></div></div>
+        <span class="progress-val" id="val-liberal">0/36</span>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">전직까지</span>
+        <div class="progress-bar"><div class="progress-fill" id="prog-next" style="width:0%;background:var(--accent3)"></div></div>
+        <span class="progress-val" id="val-next">-</span>
+      </div>
+    </div>
+    <div id="course-panel">
+      <h3>📚 이수 과목</h3>
+      <div id="course-list"></div>
+    </div>
+    <div id="skill-panel" style="border-top:1px solid var(--border);padding:6px;flex-shrink:0;">
+      <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;padding:0 3px;">🎯 스킬</div>
+      <div id="skill-list" style="display:grid;grid-template-columns:1fr 1fr;gap:3px;"></div>
+    </div>
+    <div id="log-panel"><div id="log-list"></div></div>
+  </div>
+</div>
+
+<!-- Start/Rules overlay -->
+<div id="overlay" class="overlay-base show" style="background:rgba(0,30,92,0.55);backdrop-filter:blur(4px);">
+  <div style="background:#fff;border-radius:14px;width:94%;max-width:680px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 12px 48px rgba(0,0,0,0.35);">
+    <!-- 헤더 -->
+    <div style="background:#003092;padding:18px 28px 14px;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+        <svg width="32" height="26" viewBox="0 0 60 48" fill="none"><path d="M8 36 Q4 20 16 12 Q24 6 32 14 Q38 20 30 28 Q24 34 28 40" stroke="#4A9FD4" stroke-width="5.5" fill="none" stroke-linecap="round"/><path d="M20 40 Q16 24 28 16 Q36 10 44 18 Q50 24 42 32 Q36 38 40 44" stroke="#7EC8A4" stroke-width="5.5" fill="none" stroke-linecap="round"/></svg>
+        <div>
+          <div style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.5px;">🎓 사회교육과 먹이사슬</div>
+          <div style="font-size:11px;color:#a8d4ff;margin-top:1px;">학부생에서 시작해 사회 교사 또는 교수가 되어라!</div>
+        </div>
+      </div>
+    </div>
+    <!-- 내용 -->
+    <div style="flex:1;overflow-y:auto;padding:20px 24px;background:#f5f7fa;">
+      <!-- 규칙 카드들 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e8ecf5;">
+          <div style="font-size:12px;font-weight:700;color:#003092;margin-bottom:6px;">🕹️ 조작</div>
+          <div style="font-size:11px;color:#555;line-height:1.6;">WASD / 방향키로 이동.<br>개체에 부딪히면 자동 상호작용.<br>학기 시작 전 수강신청 패널이 열림.</div>
+        </div>
+        <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e8ecf5;">
+          <div style="font-size:12px;font-weight:700;color:#003092;margin-bottom:6px;">💀 게임오버</div>
+          <div style="font-size:11px;color:#555;line-height:1.6;">학부생: 스태미나 0 → 과로사.<br>석사 이상: 포인트 0 → 과로사.<br>하위 개체를 잡아먹어 포인트 유지!</div>
+        </div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e8ecf5;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:700;color:#003092;margin-bottom:8px;">👤 개체 & 먹이사슬</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <span style="background:#eff6ff;color:#1e40af;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;">🔵 학부생 — 스태미나</span>
+          <span style="background:#f5f3ff;color:#6d28d9;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;">🟣 석사 — 3pt</span>
+          <span style="background:#fff7ed;color:#c2410c;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;">🟠 박사 — 5pt</span>
+          <span style="background:#fdf4ff;color:#a21caf;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;">🩷 포닥 — 8pt</span>
+          <span style="background:#fefce8;color:#854d0e;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;">🟡 교수 — 15pt 최종목표</span>
+          <span style="background:#f0fdf4;color:#15803d;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;">🟢 수업 — 출석해 학점 획득</span>
+        </div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e8ecf5;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:700;color:#003092;margin-bottom:6px;">📋 수강신청 & 성적</div>
+        <div style="font-size:11px;color:#555;line-height:1.7;">
+          매 학기 INHA CRS 스타일 수강신청 패널에서 과목 선택 후 픽 순위(1~7) 부여. 픽이 낮을수록 성공률 높음.<br>
+          성적: <span style="color:#1a6e3a;font-weight:600;">10회→A+ / 9→A0 / 8→A- / 7→B+ / 6→B0 / 5→B-</span> &nbsp;<span style="color:#92400e;font-weight:600;">4→C+ / 3→C0 / 1~2→C- / 0→F</span><br>
+          졸업 요건: 130학점 + 교양 + 전공필수 이수 + 교직과정 이수(임용 응시 요건)
+        </div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e8ecf5;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:700;color:#003092;margin-bottom:6px;">🎯 스킬 시스템</div>
+        <div style="font-size:11px;color:#555;line-height:1.7;">
+          15개 스킬(방법론·한국사·디지털교육·수업설계 등)을 최대 3단계 해금. 스킬 단계에 따라 성적 페널티/보너스 적용.<br>
+          수강신청창에서 각 과목의 스킬 요건 배지로 확인 가능.
+        </div>
+      </div>
+      <!-- 디버그 모드 -->
+      <div style="background:#fff8e1;border:1px solid #fcd34d;border-radius:10px;padding:14px 16px;margin-bottom:4px;">
+        <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:8px;">🐛 디버그 모드</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:11px;color:#555;">
+            <input type="radio" name="debug-mode" value="off" checked onchange="toggleDebugFromStart(false)" style="accent-color:#003092;cursor:pointer;">
+            <span><b>OFF</b> — 일반 모드</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:11px;color:#15803d;">
+            <input type="radio" name="debug-mode" value="full" onchange="toggleDebugFromStart('full')" style="accent-color:#15803d;cursor:pointer;">
+            <span><b>A</b> — 전체 디버그 (학기 1초, 모든 과목 자동달성 + 대학원 포인트 풀충)</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:11px;color:#c2410c;">
+            <input type="radio" name="debug-mode" value="undergrad" onchange="toggleDebugFromStart('undergrad_only')" style="accent-color:#c2410c;cursor:pointer;">
+            <span><b>B</b> — 학부만 디버그 (학부 학기 1초+자동달성, 대학원은 정상)</span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <!-- 하단: 이름 입력 + 시작 버튼 -->
+    <div style="background:#fff;border-top:1px solid #e8ecf5;padding:14px 24px;display:flex;align-items:center;gap:12px;justify-content:space-between;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:8px;flex:1;">
+        <label style="font-size:12px;font-weight:700;color:#003092;white-space:nowrap;">학생 이름</label>
+        <input id="player-name-input" type="text" placeholder="이름을 입력하세요" maxlength="10"
+          style="border:1.5px solid #dde3f0;border-radius:7px;padding:8px 12px;font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;flex:1;max-width:200px;color:#1a1a2e;"
+          onkeydown="if(event.key==='Enter') startGame()"
+          onfocus="this.style.borderColor='#003092'"
+          onblur="this.style.borderColor='#dde3f0'"/>
+      </div>
+      <button onclick="startGame()" style="background:#003092;color:#fff;border:none;border-radius:8px;padding:12px 36px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:-.3px;white-space:nowrap;">게임 시작 →</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Graduate School Application overlay -->
+<div id="gradapply-overlay" class="overlay-base">
+  <div style="background:#fff;border-radius:14px;width:94%;max-width:620px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.3);">
+    <div style="background:#003092;padding:14px 20px;flex-shrink:0;">
+      <div style="font-size:17px;font-weight:800;color:#fff;">🎓 대학원 신입생 모집</div>
+      <div id="gradapply-subtitle" style="font-size:11px;color:#a8d4ff;margin-top:3px;"></div>
+    </div>
+    <div id="gradapply-teps-warn" style="display:none;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:8px 12px;margin:8px 16px 0;font-size:11px;color:#991b1b;"></div>
+    <div id="gradapply-stage-label" style="font-size:12px;font-weight:700;color:#003092;padding:8px 16px 0;text-align:center;"></div>
+    <div style="flex:1;overflow-y:auto;padding:14px 16px;background:#f5f7fa;">
+      <div id="gradapply-dept-select">
+        <div style="font-size:11px;color:#666;margin-bottom:10px;">진학할 학과를 선택하세요</div>
+        <div id="gradapply-dept-list" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;"></div>
+      </div>
+      <div id="gradapply-process" style="display:none;">
+        <div id="gradapply-doc-panel" style="display:none;background:#fff;border:1px solid #e8ecf5;border-radius:8px;padding:12px 14px;margin-bottom:10px;font-size:11px;line-height:1.8;"></div>
+        <div id="gradapply-exam-panel" style="display:none;text-align:center;">
+          <div style="font-size:12px;color:#333;margin-bottom:6px;">필답고사: <b style="color:#d97706;">10초</b> 동안 최대한 클릭!</div>
+          <div id="gradapply-exam-timer" style="font-size:40px;font-weight:800;color:#003092;">10</div>
+          <div style="width:100%;height:7px;background:#e8ecf5;border-radius:4px;overflow:hidden;margin:8px 0 12px;">
+            <div id="gradapply-exam-bar" style="height:100%;width:100%;background:#6d28d9;border-radius:4px;"></div>
+          </div>
+          <div id="gradapply-exam-clicks" style="font-size:48px;font-weight:800;color:#6d28d9;margin-bottom:12px;">0</div>
+          <button onclick="gradExamClick()" ontouchstart="gradExamClick();event.preventDefault()" style="width:100%;padding:14px;font-size:17px;font-weight:800;background:#6d28d9;color:#fff;border:none;border-radius:10px;cursor:pointer;">📝 클릭!</button>
+        </div>
+        <div id="gradapply-interview-panel" style="display:none;text-align:center;">
+          <div style="font-size:12px;color:#333;margin-bottom:6px;">면접: <b style="color:#d97706;">5초</b> 동안 클릭!</div>
+          <div id="gradapply-int-timer" style="font-size:40px;font-weight:800;color:#003092;">5</div>
+          <div style="width:100%;height:7px;background:#e8ecf5;border-radius:4px;overflow:hidden;margin:8px 0 12px;">
+            <div id="gradapply-int-bar" style="height:100%;width:100%;background:#1d4ed8;border-radius:4px;"></div>
+          </div>
+          <div id="gradapply-int-clicks" style="font-size:48px;font-weight:800;color:#1d4ed8;margin-bottom:12px;">0</div>
+          <button onclick="gradIntClick()" ontouchstart="gradIntClick();event.preventDefault()" style="width:100%;padding:14px;font-size:17px;font-weight:800;background:#1d4ed8;color:#fff;border:none;border-radius:10px;cursor:pointer;">💬 클릭!</button>
+        </div>
+        <div id="gradapply-snult-panel" style="display:none;text-align:center;padding:10px;">
+          <div style="font-size:12px;color:#92400e;margin-bottom:6px;">통합사회 역사 (한국사검정)</div>
+          <div id="gradapply-snult-score" style="font-size:36px;font-weight:800;color:#92400e;margin-bottom:10px;"></div>
+          <button onclick="gradNextStage()" style="background:#b45309;color:#fff;border:none;border-radius:8px;font-size:13px;padding:8px 24px;font-weight:700;cursor:pointer;">다음 →</button>
+        </div>
+      </div>
+      <div id="gradapply-result" style="display:none;text-align:center;padding:10px 0;">
+        <div id="gradapply-result-icon" style="font-size:44px;margin-bottom:8px;"></div>
+        <div id="gradapply-result-title" style="font-size:20px;font-weight:800;color:#1a1a2e;margin-bottom:6px;"></div>
+        <div id="gradapply-result-desc" style="font-size:12px;color:#555;line-height:1.8;margin-bottom:14px;"></div>
+        <button onclick="closeGradApply()" style="background:#003092;color:#fff;border:none;border-radius:8px;padding:10px 32px;font-size:14px;font-weight:700;cursor:pointer;">확인</button>
+      </div>
+    </div>
+    <div style="background:#fff;border-top:1px solid #e8ecf5;padding:10px 16px;display:flex;justify-content:flex-end;flex-shrink:0;">
+      <button onclick="closeGradApply()" style="background:#f0f2f8;color:#555;border:1px solid #dde3f0;border-radius:6px;padding:7px 18px;font-size:12px;font-weight:600;cursor:pointer;">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- Graduate School Semester Registration overlay -->
+<div id="gradsem-overlay" class="overlay-base">
+  <div style="background:#fff;border-radius:14px;width:94%;max-width:540px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.3);">
+    <div style="background:#003092;padding:14px 20px;flex-shrink:0;">
+      <div style="font-size:17px;font-weight:800;color:#fff;">📚 대학원 수강계획</div>
+      <div id="gradsem-subtitle" style="font-size:11px;color:#a8d4ff;margin-top:4px;line-height:1.6;"></div>
+    </div>
+    <div id="gradsem-list" style="flex:1;overflow-y:auto;padding:14px 16px;background:#f5f7fa;"></div>
+    <div style="background:#fff;border-top:1px solid #e8ecf5;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+      <div style="display:flex;gap:6px;">
+        <button onclick="openGradCertOverlay()" style="background:#f0f4fb;color:#003092;border:1.5px solid #003092;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;">📜 자격증</button>
+        <button id="prof-end-btn" onclick="restartGame()" style="display:none;background:#ef4444;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;">🎓 게임 종료</button>
+        <button onclick="openGradInternOverlay()" style="background:#f0f4fb;color:#003092;border:1.5px solid #003092;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;">💼 인턴</button>
+      </div>
+      <div style="font-size:11px;color:#888;" id="gradsem-credit-info"></div>
+      <button onclick="submitGradSem()" style="background:#003092;color:#fff;border:none;border-radius:8px;padding:8px 24px;font-size:13px;font-weight:700;cursor:pointer;">학기 시작</button>
+    </div>
+  </div>
+</div>
+
+<!-- Course Registration overlay (INHA CRS Style) -->
+<div id="reg-overlay" class="overlay-base">
+  <div class="crs-shell">
+    <!-- 상단바 -->
+    <div class="crs-topbar">
+      <div class="crs-logo-area">
+        <div class="crs-logo-title">
+          <svg width="28" height="22" viewBox="0 0 60 48" fill="none">
+            <path d="M8 36 Q4 20 16 12 Q24 6 32 14 Q38 20 30 28 Q24 34 28 40" stroke="#4A6FA5" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+            <path d="M20 40 Q16 24 28 16 Q36 10 44 18 Q50 24 42 32 Q36 38 40 44" stroke="#3DAA7B" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+          </svg>
+          <span class="crs-logo-text">INHA CRS <span id="crs-semester-year" style="color:#e05c2a;font-size:13px;font-weight:700"></span></span>
+        </div>
+        <div class="crs-logo-sub">인하대학교 수강신청 시스템</div>
+      </div>
+      <div class="crs-searchbar">
+        <div class="crs-search-wrap">
+          <select id="crs-search-type"><option>교과목명</option><option>교수명</option><option>학수번호</option></select>
+          <input id="crs-search-input" type="text" placeholder="검색어를 입력하세요" oninput="crsSearch()" onkeydown="if(event.key==='Enter')crsSearch()" />
+        </div>
+        <div class="crs-search-btn" onclick="crsSearch()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+      </div>
+      <div class="crs-user-area">
+        <div>
+          <div style="font-weight:700;font-size:13px" id="crs-user-name"></div>
+          <div style="color:#888;font-size:10px" id="crs-user-id"></div>
+        </div>
+      </div>
+    </div>
+    <!-- 서브 네비 -->
+    <div class="crs-subnav">
+      <div class="crs-subnav-item active" onclick="crsNavClick('search')" id="crs-nav-search">강좌검색</div>
+      <div class="crs-subnav-item" onclick="crsNavClick('basket')" id="crs-nav-basket">수강신청</div>
+      <div class="crs-subnav-right">
+        <span id="reg-semester-label" style="font-weight:600;color:#003092"></span>
+        <span>최대 <b id="reg-max-credits" style="color:#003092">18</b>학점</span>
+        <span>픽슬롯 신청 <b id="reg-selected-credits" style="color:#c0392b">0</b>학점</span>
+      </div>
+    </div>
+    <!-- 본문 -->
+    <div class="crs-body">
+      <!-- 사이드바 -->
+      <div class="crs-sidebar" id="crs-sidebar"></div>
+      <!-- 메인 과목 리스트 -->
+      <div class="crs-main">
+        <div class="crs-course-header" id="crs-course-header">
+          <span class="crs-semester-badge" id="crs-cur-tab-label">학문의 기초</span>
+          <span class="crs-credit-info">과목 클릭 → 픽 슬롯에 배치</span>
+          <span id="crs-priority-info" class="crs-credit-info" style="margin-left:auto;color:#003092;font-weight:600"></span>
+        </div>
+        <div class="crs-course-list-wrap" id="reg-course-list"></div>
+      </div>
+      <!-- 우측 패널 (픽 슬롯 + 졸업요건) -->
+      <div class="crs-panel">
+        <div class="crs-panel-tabs">
+          <div class="crs-panel-tab active" id="gtab-req" onclick="switchGradTab('req')">졸업요건</div>
+          <div class="crs-panel-tab" id="gtab-pol" onclick="switchGradTab('pol')" style="display:none">정치외교군</div>
+          <div class="crs-panel-tab" id="gtab-pick" onclick="switchGradTab('pick')">픽 슬롯</div>
+          <div class="crs-panel-tab" id="gtab-hist" onclick="switchGradTab('hist')">수강이력</div>
+        </div>
+        <div class="crs-panel-body" id="grad-panel-content"></div>
+      </div>
+    </div>
+    <!-- 하단 푸터 -->
+    <div class="crs-footer">
+      <div class="crs-footer-left" id="reg-priority-info">픽1=최우선 (성공률 높음)</div>
+      <div class="crs-footer-right">
+        <button class="crs-btn crs-btn-gray" onclick="openMySNU()">
+          <svg width="14" height="11" viewBox="0 0 60 48" fill="none" style="vertical-align:middle;margin-right:3px"><path d="M8 36 Q4 20 16 12 Q24 6 32 14 Q38 20 30 28 Q24 34 28 40" stroke="#4A6FA5" stroke-width="5.5" fill="none" stroke-linecap="round"/><path d="M20 40 Q16 24 28 16 Q36 10 44 18 Q50 24 42 32 Q36 38 40 44" stroke="#3DAA7B" stroke-width="5.5" fill="none" stroke-linecap="round"/></svg>
+          myINHA
+        </button>
+        <button class="crs-btn crs-btn-gray" onclick="openInternOverlay()">💼 인턴</button>
+        <button class="crs-btn crs-btn-gray" onclick="openCertOverlay()">📜 자격증</button>
+        <button class="crs-btn crs-btn-primary" id="reg-submit-btn" onclick="submitRegistration()">수강신청 완료</button>
+        <button id="reg-grad-btn" onclick="triggerGraduation()" style="display:none;background:#15803d;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;">🎓 졸업신청</button>
+        <button class="crs-btn crs-btn-gray" id="reg-skip-seasonal-btn" onclick="skipSeasonalSemester()" style="display:none">계절학기 건너뛰기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- myINHA overlay -->
+<div id="mysnu-overlay" class="overlay-base">
+  <div style="background:#fff;width:100%;max-width:920px;max-height:92vh;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.35);">
+    <div style="background:#003092;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:44px;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="display:flex;align-items:center;gap:6px;cursor:pointer;" onclick="switchMySnuTab('major')">
+          <svg width="26" height="21" viewBox="0 0 60 48" fill="none"><path d="M8 36 Q4 20 16 12 Q24 6 32 14 Q38 20 30 28 Q24 34 28 40" stroke="#4A9FD4" stroke-width="5.5" fill="none" stroke-linecap="round"/><path d="M20 40 Q16 24 28 16 Q36 10 44 18 Q50 24 42 32 Q36 38 40 44" stroke="#7EC8A4" stroke-width="5.5" fill="none" stroke-linecap="round"/></svg>
+          <span style="font-size:14px;color:#fff;font-weight:700;letter-spacing:-0.3px">my<span style="color:#a8d4ff">INHA</span></span>
+        </div>
+        <div style="display:flex;gap:2px;" id="mysnu-nav-tabs">
+          <div class="msn-tab active" onclick="switchMySnuTab('major')" data-tab="major">수업·학업</div>
+          <div class="msn-tab" onclick="switchMySnuTab('grad')" data-tab="grad">대학원</div>
+          <div class="msn-tab" onclick="switchMySnuTab('crossover')" data-tab="crossover">비교과</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:11px;color:#a8d4ff" id="mysnu-user-label"></span>
+        <button onclick="document.getElementById('mysnu-overlay').classList.remove('show')" style="background:none;border:none;color:#fff;font-size:16px;cursor:pointer;padding:0 4px;line-height:1;">✕</button>
+      </div>
+    </div>
+    <div style="background:#f5f7fa;border-bottom:2px solid #dde3f0;padding:0 20px;display:flex;gap:0;flex-shrink:0;overflow-x:auto;" id="mysnu-subnav"></div>
+    <div style="flex:1;overflow-y:auto;padding:20px 24px;background:#f5f7fa;" id="mysnu-content"></div>
+  </div>
+</div>
+
+<!-- Semester Result overlay -->
+<div id="semresult-overlay" class="overlay-base" style="z-index:1200;">
+  <div style="background:#fff;border-radius:14px;width:94%;max-width:560px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.4);">
+    <!-- 헤더 -->
+    <div style="background:#003092;padding:16px 24px;flex-shrink:0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:11px;color:#a8d4ff;letter-spacing:.5px;margin-bottom:2px">인하대학교 수강신청 시스템</div>
+          <div style="font-size:17px;font-weight:700;color:#fff" id="sr-title">2024학년도 1학기 성적</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:22px;font-weight:800;color:#fff" id="sr-gpa-val">-</div>
+          <div style="font-size:10px;color:#a8d4ff">평점평균 (GPA)</div>
+        </div>
+      </div>
+      <!-- 요약 바 -->
+      <div style="display:flex;gap:12px;margin-top:12px;">
+        <div style="flex:1;background:rgba(255,255,255,0.12);border-radius:8px;padding:8px 12px;text-align:center;">
+          <div style="font-size:18px;font-weight:800;color:#fff" id="sr-total-credits">0</div>
+          <div style="font-size:9px;color:#a8d4ff">총 취득학점</div>
+        </div>
+        <div style="flex:1;background:rgba(255,255,255,0.12);border-radius:8px;padding:8px 12px;text-align:center;">
+          <div style="font-size:18px;font-weight:800;color:#fff" id="sr-sem-credits">0</div>
+          <div style="font-size:9px;color:#a8d4ff">이번 학기 학점</div>
+        </div>
+        <div style="flex:1;background:rgba(255,255,255,0.12);border-radius:8px;padding:8px 12px;text-align:center;">
+          <div style="font-size:18px;font-weight:800;color:#fff" id="sr-course-count">0</div>
+          <div style="font-size:9px;color:#a8d4ff">이수 과목</div>
+        </div>
+      </div>
+    </div>
+    <!-- 과목 목록 -->
+    <div style="flex:1;overflow-y:auto;padding:16px 20px;background:#f5f7fa;">
+      <div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">이번 학기 이수 과목</div>
+      <div id="sr-course-list"></div>
+    </div>
+    <!-- 하단 버튼 -->
+    <div style="background:#fff;border-top:1px solid #e8ecf5;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div style="font-size:11px;color:#888" id="sr-next-hint">다음 학기 수강신청이 시작됩니다</div>
+      <button onclick="closeSemResult()" style="background:#003092;color:#fff;border:none;border-radius:8px;padding:10px 28px;font-size:14px;font-weight:700;cursor:pointer;">확인 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Double/Minor Major overlay -->
+<div id="double-overlay" class="overlay-base">
+  <div class="overlay-box" style="max-width:720px;text-align:center;">
+    <div style="font-family:'Black Han Sans',sans-serif;font-size:20px;color:var(--accent3);margin-bottom:8px;">🏛️ 복수전공 / 부전공 신청</div>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:12px;" id="double-info"></div>
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;" id="double-cards"></div>
+    <div style="font-size:10px;color:#666;margin-bottom:12px;">이번 학기 최대 6개 신청 가능. 같은 전공의 복수전공+부전공 동시 신청 불가. 실패 시 다음 학기 재신청 가능.</div>
+    <div id="double-grad-status" style="margin-bottom:8px;"></div>
+    <button class="btn btn-sm" style="background:#888;color:#fff;" onclick="skipDouble()">수강신청으로 이동</button>
+  </div>
+</div>
+
+<!-- Transcript overlay -->
+<div id="transcript-overlay" class="overlay-base">
+  <div class="overlay-box" style="max-width:560px;">
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="font-family:'Black Han Sans',sans-serif;font-size:20px;color:var(--accent);">🎓 인하대학교 사회교육과</div>
+      <div style="font-size:12px;color:var(--dim);">학부 졸업 성적 확인서</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <div style="flex:1;background:#f5f7fa;border:1px solid #e8ecf5;border-radius:7px;padding:8px;text-align:center;">
+        <div style="font-size:9px;color:var(--dim);margin-bottom:2px;">총 취득학점</div>
+        <div id="tr-credits" style="font-family:'Black Han Sans',sans-serif;font-size:18px;color:#60a5fa;">-</div>
+      </div>
+      <div style="flex:1;background:#f5f7fa;border:1px solid #e8ecf5;border-radius:7px;padding:8px;text-align:center;">
+        <div style="font-size:9px;color:var(--dim);margin-bottom:2px;">최종 GPA</div>
+        <div id="tr-gpa" style="font-family:'Black Han Sans',sans-serif;font-size:18px;color:#003092;">-</div>
+      </div>
+      <div style="flex:1;background:#f5f7fa;border:1px solid #e8ecf5;border-radius:7px;padding:8px;text-align:center;">
+        <div style="font-size:9px;color:var(--dim);margin-bottom:2px;">교양/전공</div>
+        <div id="tr-breakdown" style="font-family:'Black Han Sans',sans-serif;font-size:14px;color:#ffd93d;">-</div>
+      </div>
+    </div>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:12px;">
+      <div style="display:grid;grid-template-columns:1fr 70px 36px 34px;padding:5px 9px;border-bottom:1px solid var(--border);font-size:9px;color:var(--dim);">
+        <span>과목명</span><span>구분</span><span style="text-align:right">학점</span><span style="text-align:right">성적</span>
+      </div>
+      <div id="tr-rows" style="max-height:240px;overflow-y:auto;"></div>
+    </div>
+    <div id="tr-result" style="border-radius:7px;padding:12px;text-align:center;margin-bottom:14px;"></div>
+    <div style="text-align:center;display:flex;gap:10px;justify-content:center;">
+      <button class="btn" id="tr-btn" onclick="confirmGraduation()">확인</button>
+      <button class="btn btn-orange" id="tr-continue-btn" onclick="continueStudying()" style="display:none">계속 수강하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 임용 1차 Exam overlay -->
+<div id="leet-overlay" class="overlay-base">
+  <div class="overlay-box" style="max-width:460px;text-align:center;">
+    <div style="font-family:'Black Han Sans',sans-serif;font-size:20px;color:#a78bfa;margin-bottom:4px;">📝 임용 1차 시험</div>
+    <div style="font-size:11px;color:var(--dim);margin-bottom:16px;">중등교원 임용 1차 필기시험</div>
+
+    <!-- 시험 전 대기 -->
+    <div id="leet-ready">
+      <div style="font-size:13px;color:var(--text);margin-bottom:12px;line-height:1.7">
+        제한 시간 <b style="color:#fbbf24">10초</b> 동안 버튼을 최대한 빠르게 클릭하세요.<br>
+        <span style="font-size:10px;color:var(--dim)">스페이스바로도 클릭할 수 있습니다.</span>
+      </div>
+      <div style="font-size:10px;color:#666;margin-bottom:16px;">임용 1차(필기) 점수는 최종 합격의 50%를 차지합니다.</div>
+      <button class="btn" onclick="startLeet()" style="background:#7c3aed;font-size:16px;padding:12px 32px">시험 시작</button>
+    </div>
+
+    <!-- 시험 중 -->
+    <div id="leet-running" style="display:none">
+      <div style="font-size:13px;color:var(--dim);margin-bottom:8px;">남은 시간</div>
+      <div id="leet-timer" style="font-family:'Black Han Sans',sans-serif;font-size:48px;color:#fbbf24;margin-bottom:8px;">10</div>
+      <div style="width:100%;height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:16px;">
+        <div id="leet-timer-bar" style="height:100%;width:100%;background:#fbbf24;transition:width 0.1s linear;border-radius:4px;"></div>
+      </div>
+      <div style="font-size:12px;color:var(--dim);margin-bottom:6px;">클릭 횟수</div>
+      <div id="leet-count" style="font-family:'Black Han Sans',sans-serif;font-size:52px;color:#a78bfa;margin-bottom:12px;">0</div>
+      <button id="leet-btn" class="btn" style="background:#7c3aed;font-size:18px;padding:16px 60px;width:100%;cursor:pointer;user-select:none;-webkit-user-select:none;"
+        onclick="leetClick()" ontouchstart="leetClick();event.preventDefault()">
+        📝 클릭!
+      </button>
+    </div>
+
+    <!-- 결과 -->
+    <div id="leet-result" style="display:none">
+      <div style="font-size:12px;color:var(--dim);margin-bottom:6px;">총 클릭 횟수</div>
+      <div id="leet-final-count" style="font-family:'Black Han Sans',sans-serif;font-size:36px;color:#a78bfa;margin-bottom:4px;"></div>
+      <div id="leet-score-line" style="font-size:13px;color:var(--text);margin-bottom:16px;"></div>
+      <div id="leet-combined-result" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:16px;font-size:11px;text-align:left;line-height:2;"></div>
+      <button class="btn" onclick="applyLeetResult()" style="background:#7c3aed">결과 확인 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Critique Click overlay (설계비평) -->
+<div id="critique-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:3000;align-items:center;justify-content:center;flex-direction:column;text-align:center;">
+  <div style="background:#1e293b;border:2px solid #f97316;border-radius:12px;padding:24px 32px;max-width:340px;width:90%">
+    <div id="critique-title-line" style="font-family:'Black Han Sans',sans-serif;font-size:18px;color:#f97316;margin-bottom:4px;">⚖️ 설계 비평</div>
+    <div style="font-size:10px;color:#888;margin-bottom:12px;" id="critique-boss-name"></div>
+    <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;line-height:1.6">
+      <b style="color:#fbbf24">1초</b> 안에 버튼을 <b style="color:#fbbf24">5번</b> 클릭하세요!<br>
+      <span style="font-size:9px;color:#666">5회→진도+1 / 4회→변화없음 / 3~2회→진도-1 / 1회→진도-2 / 0회→진도-3</span>
+    </div>
+    <div id="critique-timer-bar-wrap" style="width:100%;height:8px;background:#e8ecf5;border-radius:4px;overflow:hidden;margin-bottom:10px;">
+      <div id="critique-timer-bar" style="height:100%;width:100%;background:#f97316;transition:width 0.05s linear;border-radius:4px;"></div>
+    </div>
+    <div id="critique-count" style="font-family:'Black Han Sans',sans-serif;font-size:44px;color:#a78bfa;margin-bottom:10px;">0</div>
+    <button id="critique-btn" class="btn" style="background:#f97316;font-size:16px;padding:14px 48px;width:100%;cursor:pointer;user-select:none;-webkit-user-select:none;"
+      onclick="critiqueClick()" ontouchstart="critiqueClick();event.preventDefault()">✏️ 클릭!</button>
+  </div>
+</div>
+
+<!-- Intern Process Modal (서류/면접/결과 통합) -->
+<div id="intern-process-modal" style="display:none;position:fixed;inset:0;background:rgba(0,30,92,0.5);z-index:1100;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;max-width:400px;width:94%;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.3);text-align:center;">
+    <div style="background:#003092;padding:14px 20px;">
+      <div id="ipm-intern-name" style="font-size:16px;font-weight:800;color:#fff;"></div>
+    </div>
+    <div style="padding:24px 24px 20px;">
+
+      <!-- 1단계: 서류 결과 -->
+      <div id="ipm-doc-result" style="display:none">
+        <div id="ipm-doc-icon" style="font-size:42px;margin-bottom:8px"></div>
+        <div id="ipm-doc-title" style="font-size:20px;font-weight:800;margin-bottom:8px"></div>
+        <div id="ipm-doc-desc" style="font-size:12px;color:#555;line-height:1.8;margin-bottom:16px;text-align:left;background:#f5f7fa;border-radius:8px;padding:10px 14px;"></div>
+        <button id="ipm-doc-btn" onclick="ipmDocNext()" style="background:#003092;color:#fff;border:none;border-radius:8px;padding:10px 28px;font-size:14px;font-weight:700;cursor:pointer;"></button>
+      </div>
+
+      <!-- 2단계: 면접 대기 -->
+      <div id="ipm-interview-ready" style="display:none">
+        <div style="font-size:13px;color:#333;margin-bottom:16px;line-height:1.8;">
+          서류 합격! 이제 <b style="color:#003092;">면접</b>을 진행합니다.<br>
+          <span style="font-size:11px;color:#888;">10초 동안 최대한 클릭 — 100회 = +23%</span>
+        </div>
+        <button onclick="ipmStartInterview()" style="background:#003092;color:#fff;border:none;border-radius:8px;padding:12px 32px;font-size:14px;font-weight:700;cursor:pointer;">면접 시작</button>
+      </div>
+
+      <!-- 3단계: 면접 진행 -->
+      <div id="ipm-interview-running" style="display:none">
+        <div id="ipm-timer" style="font-size:48px;font-weight:800;color:#003092;margin-bottom:6px;">10</div>
+        <div style="width:100%;height:8px;background:#e8ecf5;border-radius:4px;overflow:hidden;margin-bottom:14px;">
+          <div id="ipm-bar" style="height:100%;width:100%;background:#003092;border-radius:4px;transition:width .1s;"></div>
+        </div>
+        <div id="ipm-clicks" style="font-size:54px;font-weight:800;color:#1a8f4a;margin-bottom:12px;">0</div>
+        <button onclick="ipmInterviewClick()" ontouchstart="ipmInterviewClick();event.preventDefault()" style="width:100%;padding:16px;font-size:18px;font-weight:800;background:#003092;color:#fff;border:none;border-radius:10px;cursor:pointer;">💬 클릭!</button>
+      </div>
+
+      <!-- 4단계: 최종 결과 -->
+      <div id="ipm-final-result" style="display:none">
+        <div id="ipm-final-icon" style="font-size:42px;margin-bottom:8px;"></div>
+        <div id="ipm-final-title" style="font-size:20px;font-weight:800;margin-bottom:8px;"></div>
+        <div id="ipm-final-desc" style="font-size:12px;color:#555;line-height:1.8;margin-bottom:16px;text-align:left;background:#f5f7fa;border-radius:8px;padding:10px 14px;"></div>
+        <button onclick="ipmClose()" style="background:#003092;color:#fff;border:none;border-radius:8px;padding:10px 28px;font-size:14px;font-weight:700;cursor:pointer;">확인</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Intern Apply overlay -->
+<div id="intern-overlay" class="overlay-base">
+  <div style="background:#fff;border-radius:14px;width:94%;max-width:520px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.3);">
+    <div style="background:#003092;padding:14px 20px;flex-shrink:0;">
+      <div style="font-size:17px;font-weight:800;color:#fff;">💼 인턴 지원</div>
+      <div style="font-size:11px;color:#a8d4ff;margin-top:2px;">30회 활동 완료 시 인턴 이수 인정 · 수강신청 대신 진행</div>
+    </div>
+    <div id="intern-list" style="flex:1;overflow-y:auto;padding:14px 16px;background:#f5f7fa;"></div>
+    <div style="background:#fff;border-top:1px solid #e8ecf5;padding:12px 16px;display:flex;justify-content:flex-end;flex-shrink:0;">
+      <button onclick="closeInternOverlay()" style="background:#003092;color:#fff;border:none;border-radius:8px;padding:8px 24px;font-size:13px;font-weight:700;cursor:pointer;">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- Certificate overlay -->
+<div id="cert-overlay" class="overlay-base">
+  <div style="background:#fff;border-radius:14px;width:94%;max-width:500px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.3);">
+    <div style="background:#003092;padding:14px 20px;flex-shrink:0;">
+      <div style="font-size:17px;font-weight:800;color:#fff;">📜 자격증 시험</div>
+      <div id="cert-status" style="font-size:11px;color:#a8d4ff;margin-top:2px;"></div>
+    </div>
+    <div id="cert-list" style="flex:1;overflow-y:auto;padding:14px 16px;background:#f5f7fa;"></div>
+    <div style="background:#fff;border-top:1px solid #e8ecf5;padding:12px 16px;display:flex;justify-content:flex-end;flex-shrink:0;">
+      <button onclick="document.getElementById('cert-overlay').classList.remove('show')" style="background:#003092;color:#fff;border:none;border-radius:8px;padding:8px 24px;font-size:13px;font-weight:700;cursor:pointer;">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- Certificate Click Test overlay -->
+<div id="certtest-overlay" class="overlay-base">
+  <div style="background:#fff;border-radius:14px;width:94%;max-width:420px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.3);">
+    <div style="background:#003092;padding:14px 20px;text-align:center;flex-shrink:0;">
+      <div style="font-size:17px;font-weight:800;color:#fff;" id="certtest-title">자격증 시험</div>
+      <div style="font-size:11px;color:#a8d4ff;margin-top:2px;" id="certtest-desc"></div>
+    </div>
+    <div style="padding:20px 24px;background:#f5f7fa;text-align:center;">
+      <div id="certtest-ready">
+        <div style="font-size:13px;color:#555;margin-bottom:16px;">제한 시간 내 최대한 클릭하세요!</div>
+        <button onclick="startCertTest()" style="background:#003092;color:#fff;border:none;border-radius:8px;padding:10px 32px;font-size:14px;font-weight:700;cursor:pointer;">시험 시작</button>
+      </div>
+      <div id="certtest-running" style="display:none">
+        <div id="certtest-timer" style="font-size:44px;font-weight:800;color:#003092;margin-bottom:8px;">10</div>
+        <div style="width:100%;height:8px;background:#e8ecf5;border-radius:4px;overflow:hidden;margin-bottom:16px;">
+          <div id="certtest-bar" style="height:100%;width:100%;background:#003092;border-radius:4px;transition:width .1s;"></div>
+        </div>
+        <div id="certtest-count" style="font-size:52px;font-weight:800;color:#1a8f4a;margin-bottom:14px;">0</div>
+        <button onclick="certTestClick()" ontouchstart="certTestClick();event.preventDefault()" style="width:100%;padding:16px;font-size:18px;font-weight:800;background:#003092;color:#fff;border:none;border-radius:10px;cursor:pointer;">📝 클릭!</button>
+      </div>
+      <div id="certtest-result" style="display:none">
+        <div id="certtest-result-text" style="font-size:13px;color:#333;margin-bottom:16px;line-height:1.8;text-align:left;background:#fff;border-radius:8px;padding:12px 16px;border:1px solid #e8ecf5;"></div>
+        <button onclick="closeCertTest()" style="background:#003092;color:#fff;border:none;border-radius:8px;padding:10px 32px;font-size:14px;font-weight:700;cursor:pointer;">확인</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NCS Test overlay -->
+<div id="ncs-overlay" class="overlay-base">
+  <div style="background:#fff;border-radius:14px;width:94%;max-width:420px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.3);">
+    <div style="background:#003092;padding:14px 20px;text-align:center;flex-shrink:0;">
+      <div style="font-size:17px;font-weight:800;color:#fff;">📋 NCS 시험</div>
+      <div style="font-size:11px;color:#a8d4ff;margin-top:2px;">10초 동안 최대한 클릭하세요! (80회=100점)</div>
+    </div>
+    <div style="padding:20px 24px;background:#f5f7fa;text-align:center;">
+    <div id="ncs-ready">
+      <button onclick="startNcs()" style="background:#003092;color:#fff;border:none;border-radius:8px;padding:12px 36px;font-size:16px;font-weight:700;cursor:pointer;">시험 시작</button>
+    </div>
+    <div id="ncs-running" style="display:none">
+      <div id="ncs-timer" style="font-size:44px;font-weight:800;color:#003092;margin-bottom:6px;">10</div>
+      <div style="width:100%;height:7px;background:#e8ecf5;border-radius:4px;overflow:hidden;margin-bottom:12px;">
+        <div id="ncs-bar" style="height:100%;width:100%;background:#003092;border-radius:4px;transition:width .1s;"></div>
+      </div>
+      <div id="ncs-count" style="font-size:52px;font-weight:800;color:#1a8f4a;margin-bottom:12px;">0</div>
+      <button onclick="ncsClick()" ontouchstart="ncsClick();event.preventDefault()" style="width:100%;padding:16px;font-size:18px;font-weight:800;background:#003092;color:#fff;border:none;border-radius:10px;cursor:pointer;">⚡ 클릭!</button>
+    </div>
+    <div id="ncs-result" style="display:none">
+      <div id="ncs-result-text" style="font-size:13px;margin-bottom:14px;line-height:1.7"></div>
+      <button class="btn" onclick="finishNcsAndShowCompanies()" style="background:#f97316">공기업 선택 →</button>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- Public Company Select overlay -->
+<div id="pubco-overlay" class="overlay-base">
+  <div class="overlay-box" style="max-width:560px">
+    <div style="font-family:'Black Han Sans',sans-serif;font-size:18px;color:#f97316;margin-bottom:4px">🏢 공기업 지원</div>
+    <div style="font-size:10px;color:var(--dim);margin-bottom:4px" id="pubco-score-line"></div>
+    <div style="font-size:9px;color:#666;margin-bottom:12px">지원할 공기업을 선택하세요 (최대 3곳)</div>
+    <div id="pubco-list" style="max-height:340px;overflow-y:auto;margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="btn" onclick="submitPubco()" style="background:#f97316">지원하기</button>
+      <button class="btn btn-orange" onclick="closePubcoOverlay()">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- Public Company Result overlay -->
+<div id="pubco-result-overlay" class="overlay-base">
+  <div class="overlay-box" style="max-width:500px;text-align:center">
+    <div style="font-family:'Black Han Sans',sans-serif;font-size:20px;color:#f97316;margin-bottom:14px">🏢 공기업 입사 결과</div>
+    <div id="pubco-result-content" style="margin-bottom:18px"></div>
+    <div id="pubco-result-btns"></div>
+  </div>
+</div>
+
+<!-- Appraiser Exam overlay -->
+<div id="appraiser-overlay" class="overlay-base">
+  <div class="overlay-box" style="max-width:440px;text-align:center">
+    <div style="font-family:'Black Han Sans',sans-serif;font-size:20px;color:#003092;margin-bottom:4px">🏛️ 7급 공무원 시험</div>
+    <div style="font-size:10px;color:var(--dim);margin-bottom:4px">제한시간 30초 동안 목표 클릭수를 달성하세요</div>
+    <div style="font-size:11px;color:#fbbf24;margin-bottom:14px" id="appraiser-goal-line"></div>
+    <div id="appraiser-ready">
+      <button class="btn" onclick="startAppraiser()" style="background:#059669;font-size:16px;padding:12px 32px">시험 시작</button>
+    </div>
+    <div id="appraiser-running" style="display:none">
+      <div id="appraiser-timer" style="font-family:'Black Han Sans',sans-serif;font-size:44px;color:#fbbf24;margin-bottom:6px">30</div>
+      <div style="width:100%;height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:4px">
+        <div id="appraiser-timer-bar" style="height:100%;width:100%;background:#fbbf24;border-radius:4px"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--dim);margin-bottom:10px">
+        <span>클릭: <b id="appraiser-count" style="color:#15803d">0</b></span>
+        <span>목표: <b id="appraiser-goal-num" style="color:#fbbf24">300</b>회</span>
+      </div>
+      <div style="width:100%;height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:14px">
+        <div id="appraiser-progress-bar" style="height:100%;width:0%;background:#34d399;border-radius:3px;transition:width 0.05s"></div>
+      </div>
+      <button class="btn" style="width:100%;padding:14px;font-size:18px;background:#059669" onclick="appraiserClick()" ontouchstart="appraiserClick();event.preventDefault()">🏠 클릭!</button>
+    </div>
+    <div id="appraiser-result" style="display:none">
+      <div id="appraiser-result-text" style="font-size:13px;margin-bottom:16px;line-height:1.8"></div>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button class="btn" id="appraiser-pass-btn" onclick="showAppraiserDiplomaWithBachelor()" style="display:none;background:#059669">합격증 보기 →</button>
+        <button class="btn btn-orange" id="appraiser-retry-btn" onclick="retryAppraiser()">진로 결정으로 돌아가기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Appraiser Diploma overlay -->
+<div id="appraiserdiploma-overlay" class="overlay-base">
+  <div class="overlay-box" style="max-width:460px;text-align:center">
+    <div style="border:2px solid #86efac;border-radius:10px;padding:20px 24px;background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 100%)">
+      <div style="font-size:11px;color:#15803d;letter-spacing:3px;margin-bottom:4px">MINISTRY OF LAND, INFRASTRUCTURE AND TRANSPORT</div>
+      <div style="font-family:'Black Han Sans',sans-serif;font-size:22px;color:#003092;margin-bottom:2px">7급 공무원 합격증</div>
+      <div style="font-size:10px;color:#666;margin-bottom:16px">Certified Real Estate Appraiser</div>
+      <div style="font-size:13px;color:var(--text);margin-bottom:6px">사회교육과 출신</div>
+      <div id="appraiserdiploma-info" style="font-size:11px;color:#444;margin-bottom:14px"></div>
+      <div id="appraiserdiploma-majors" style="margin-bottom:14px"></div>
+      <div id="appraiserdiploma-date" style="font-size:9px;color:#666;margin-bottom:16px"></div>
+      <button class="btn btn-warn" onclick="restartGame()" style="background:#059669">다시 도전</button>
+    </div>
+  </div>
+</div>
+
+<!-- Career Choice overlay (진로 선택) -->
+<div id="career-overlay" class="overlay-base">
+  <div class="overlay-box" style="max-width:560px;text-align:center;">
+    <div style="font-family:'Black Han Sans',sans-serif;font-size:20px;color:var(--accent3);margin-bottom:6px;">🎓 졸업 후 진로 선택</div>
+    <div style="font-size:11px;color:var(--dim);margin-bottom:20px;">
+      GPA <b id="career-gpa" style="color:#003092">-</b> &nbsp;|&nbsp; 총 <b id="career-credits" style="color:#1d4ed8">-</b>학점
+    </div>
+    <div style="display:flex;gap:12px;margin-bottom:16px;">
+      <!-- 대학원 카드 -->
+      <div style="flex:1;background:var(--bg);border:1px solid #00c9a7;border-radius:10px;padding:16px;cursor:pointer;transition:background 0.15s" onclick="chooseCareer('grad')" onmouseover="this.style.background='#eef2fc'" onmouseout="this.style.background='#fff'">
+        <div style="font-size:28px;margin-bottom:8px;">🔬</div>
+        <div style="font-family:'Black Han Sans',sans-serif;font-size:15px;color:#00c9a7;margin-bottom:6px;">대학원 진학</div>
+        <div style="font-size:10px;color:var(--dim);line-height:1.6">석사 → 박사 → 포닥 → 교수<br>복수/부전공에 따른 보너스 적용<br>최종 목표: 교수 달성</div>
+        <div id="career-bonus-preview" style="margin-top:8px;font-size:9px;color:#00c9a7"></div>
+      </div>
+      <!-- 임용 카드 -->
+      <div id="lawschool-card" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:background 0.15s" onclick="chooseCareer('law')" onmouseover="this.style.background='#1a0e2e'" onmouseout="this.style.background='var(--bg)'">
+        <div style="font-size:28px;margin-bottom:8px;">👩‍🏫</div>
+        <div style="font-family:'Black Han Sans',sans-serif;font-size:15px;margin-bottom:6px;" id="lawschool-title">임용고시(사회)</div>
+        <div style="font-size:10px;color:var(--dim);line-height:1.6" id="lawschool-desc">-</div>
+        <div style="margin-top:8px;font-size:10px;font-weight:700" id="lawschool-verdict"></div>
+      </div>
+      <!-- 공기업 카드 -->
+      <div style="flex:1;background:var(--bg);border:1px solid #f97316;border-radius:10px;padding:16px;cursor:pointer;transition:background 0.15s" onclick="chooseCareer('pubco')" onmouseover="this.style.background='#1a0e0a'" onmouseout="this.style.background='var(--bg)'">
+        <div style="font-size:28px;margin-bottom:8px;">🏢</div>
+        <div style="font-family:'Black Han Sans',sans-serif;font-size:15px;color:#f97316;margin-bottom:6px;">공기업 취업</div>
+        <div style="font-size:10px;color:var(--dim);line-height:1.6">NCS + 학점 + 자격증 + 인턴<br>학위 계열에 따라 보정 점수 부여<br>최종 점수로 합격 여부 결정</div>
+        <div style="margin-top:8px;font-size:9px;color:#f97316">NCS 시험 → 공기업 선택 → 결과</div>
+      </div>
+      <!-- 7급 공무원 카드 -->
+      <div style="flex:1;background:var(--bg);border:1px solid #34d399;border-radius:10px;padding:16px;cursor:pointer;transition:background 0.15s" onclick="chooseCareer('appraiser')" onmouseover="this.style.background='#0a1a14'" onmouseout="this.style.background='var(--bg)'">
+        <div style="font-size:28px;margin-bottom:8px;">🏠</div>
+        <div style="font-family:'Black Han Sans',sans-serif;font-size:15px;color:#34d399;margin-bottom:6px;">7급 공무원</div>
+        <div style="font-size:10px;color:#555;line-height:1.6" id="appraiser-card-desc">30초 300회 클릭 시험<br>관련 과목 수강 시 요구 클릭수 감소</div>
+        <div style="margin-top:8px;font-size:9px;color:#15803d" id="appraiser-card-bonus"></div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+      <button class="btn btn-sm" style="background:#f0f2f8;color:#555;border:1px solid #dde3f0;font-size:10px;padding:5px 12px" onclick="returnToRegistrationFromCareer()">← 수강신청으로 돌아가기</button>
+      <div style="font-size:9px;color:#888">임용 선택 시 즉시 응시 및 결과 발급</div>
+    </div>
+  </div>
+</div>
+
+<!-- Law School Diploma overlay -->
+<div id="lawdiploma-overlay" class="overlay-base">
+  <div class="overlay-box" style="max-width:520px;text-align:center;">
+    <div style="border:2px solid #c4b5fd;border-radius:10px;padding:20px 24px;background:linear-gradient(135deg,#f5f3ff 0%,#ede9fe 100%);">
+      <div style="font-size:11px;color:#a78bfa;letter-spacing:3px;margin-bottom:4px;">INHA UNIVERSITY</div>
+      <div style="font-family:'Black Han Sans',sans-serif;font-size:10px;color:#888;margin-bottom:2px;">중등교원 임용시험</div>
+      <div style="font-family:'Black Han Sans',sans-serif;font-size:22px;color:#a78bfa;margin-bottom:2px;" id="lawdiploma-title">사회교사 임용 합격증</div>
+      <div style="font-size:10px;color:#666;margin-bottom:16px;">일반사회 정교사 2급</div>
+      <div style="font-size:13px;color:var(--text);margin-bottom:6px;">사회교육과 출신</div>
+      <div style="font-size:11px;color:#444;margin-bottom:16px;" id="lawdiploma-info"></div>
+      <div id="lawdiploma-school-badge" style="margin-bottom:16px;"></div>
+      <div id="lawdiploma-majors" style="margin-bottom:14px;"></div>
+      <div style="font-size:9px;color:#888;margin-bottom:16px;" id="lawdiploma-date"></div>
+      <button class="btn btn-warn" onclick="restartGame()" style="background:#7c3aed">다시 도전</button>
+    </div>
+  </div>
+</div>
+
+<!-- Diploma overlay -->
+<div id="diploma-overlay" class="overlay-base">
+  <div class="overlay-box" style="max-width:560px;text-align:center;">
+    <div style="border:2px solid var(--accent3);border-radius:10px;padding:20px 24px;background:linear-gradient(135deg,#f0f4fb 0%,#e8ecf5 100%);">
+      <div style="font-size:11px;color:#7c9cbf;letter-spacing:3px;margin-bottom:4px;">INHA UNIVERSITY</div>
+      <div style="font-family:'Black Han Sans',sans-serif;font-size:22px;color:#f59e0b;margin-bottom:2px;">졸업증서</div>
+      <div style="font-size:10px;color:#666;margin-bottom:16px;">Diploma of Bachelor</div>
+      <div style="font-family:'Black Han Sans',sans-serif;font-size:16px;color:#1a1a2e;margin-bottom:4px;">사회교육과</div>
+      <div style="font-size:11px;color:#444;margin-bottom:16px;" id="diploma-gpa-line"></div>
+      <div id="diploma-majors" style="margin-bottom:16px;"></div>
+      <div id="diploma-bonus-box" style="background:#f8f9fc;border:1px solid #dde3f0;border-radius:8px;padding:12px;margin-bottom:16px;text-align:left;color:#1a1a2e;"></div>
+      <div style="font-size:9px;color:#888;margin-bottom:16px;" id="diploma-date"></div>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button class="btn" onclick="closeDiplomaAndGraduate()" id="diploma-grad-btn">진로 결정 →</button>
+        <button class="btn btn-orange" onclick="closeDiplomaAndContinue()" id="diploma-cont-btn" style="display:none">계속 수강하기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Game Over overlay -->
+<div id="gameover-overlay" class="overlay-base">
+  <div class="overlay-box" style="max-width:420px;text-align:center;">
+    <div style="font-family:'Black Han Sans',sans-serif;font-size:26px;color:#ef4444;margin-bottom:10px;" id="go-title">💀 과로사...</div>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:20px;" id="go-msg"></div>
+    <button class="btn btn-warn" onclick="restartGame()">다시 도전</button>
+  </div>
+</div>
+
+<!-- 게임 로직: js/ 폴더로 분리, 아래 순서대로 로드 -->
+  <script src="js/data/01-LIBERAL_COURSES.js"></script>
+  <script src="js/data/02-GEO_COURSES.js"></script>
+  <script src="js/data/03-AGRI_COURSES.js"></script>
+  <script src="js/data/04-ECON_COURSES.js"></script>
+  <script src="js/data/05-FOREST_COURSES.js"></script>
+  <script src="js/data/06-POLISCI_COURSES.js"></script>
+  <script src="js/data/07-POLISCI_CROSSOVER_CODES.js"></script>
+  <script src="js/data/08-HISTORY_COURSES.js"></script>
+  <script src="js/data/09-JAPAN_COURSES.js"></script>
+  <script src="js/data/10-JAPAN_CROSSOVER_CODES.js"></script>
+  <script src="js/data/11-JAPAN_STUDIES_COURSES.js"></script>
+  <script src="js/data/12-ARTHISTORY_COURSES.js"></script>
+  <script src="js/data/13-EDU_HISTORY_COURSES.js"></script>
+  <script src="js/data/14-STS_COURSES.js"></script>
+  <script src="js/data/15-LAND_COURSES.js"></script>
+  <script src="js/data/16-STUDIO_CODES.js"></script>
+  <script src="js/data/17-GENV_COURSES.js"></script>
+  <script src="js/data/18-CIVIL_COURSES.js"></script>
+  <script src="js/data/19-EARTH_COURSES.js"></script>
+  <script src="js/data/20-GENV_CROSSLIST.js"></script>
+  <script src="js/data/21-SOC_COURSES.js"></script>
+  <script src="js/data/22-GL_CORE_CODES.js"></script>
+  <script src="js/data/23-GL_SS_CODES.js"></script>
+  <script src="js/data/24-isGreenLeaderInternDone.js"></script>
+  <script src="js/data/25-SKILL_META.js"></script>
+  <script src="js/data/26-COURSE_SKILL_MAP.js"></script>
+  <script src="js/data/27-SKILL_UNLOCK_REQ.js"></script>
+  <script src="js/systems/01-getAdjustedGradeMap.js"></script>
+  <script src="js/systems/02-showSkillPassiveFx.js"></script>
+  <script src="js/systems/03-hasDoubleMajor.js"></script>
+  <script src="js/systems/04-getRankIdx.js"></script>
+  <script src="js/systems/05-resizeCanvas.js"></script>
+  <script src="js/systems/06-getMaxCredits.js"></script>
+  <script src="js/systems/07-openRegistration.js"></script>
+  <script src="js/systems/08-switchGradTab.js"></script>
+  <script src="js/systems/09-chk.js"></script>
+  <script src="js/systems/10-buildGradHistHTML.js"></script>
+  <script src="js/systems/11-switchRegTab.js"></script>
+  <script src="js/systems/12-renderRegCourses.js"></script>
+  <script src="js/systems/13-renderPickSlots.js"></script>
+  <script src="js/systems/14-toggleCourse.js"></script>
+  <script src="js/systems/15-finalizeRegistration.js"></script>
+  <script src="js/systems/16-RESEARCH_DEPTS.js"></script>
+  <script src="js/systems/17-addResearchPlan.js"></script>
+  <script src="js/systems/18-endSemester.js"></script>
+  <script src="js/systems/19-recomputeMajorCredits.js"></script>
+  <script src="js/systems/20-calcGenvRequiredPassed.js"></script>
+  <script src="js/systems/21-calcPolisciDaDivCredits.js"></script>
+  <script src="js/systems/22-checkDoubleMajorEligible.js"></script>
+  <script src="js/systems/23-applyMajor.js"></script>
+  <script src="js/systems/24-showTranscript.js"></script>
+  <script src="js/systems/25-confirmGraduation.js"></script>
+  <script src="js/systems/26-showSemResult.js"></script>
+  <script src="js/systems/27-closeSemResult.js"></script>
+  <script src="js/systems/28-INTERN_RELATED_CATS.js"></script>
+  <script src="js/systems/29-ipmShow.js"></script>
+  <script src="js/systems/30-_mySnuMainTab.js"></script>
+  <script src="js/systems/31-msnCard.js"></script>
+  <script src="js/systems/32-openInternOverlay.js"></script>
+  <script src="js/systems/33-ipmDocNext.js"></script>
+  <script src="js/systems/34-closeInternOverlay.js"></script>
+  <script src="js/systems/35-_certTestKey.js"></script>
+  <script src="js/systems/36-closeCertTest.js"></script>
+  <script src="js/systems/37-_ncsClicks.js"></script>
+  <script src="js/systems/38-calcDegreeBonus.js"></script>
+  <script src="js/systems/39-_appraiserClicks.js"></script>
+  <script src="js/systems/40-showAppraiserDiplomaWithBachelor.js"></script>
+  <script src="js/systems/41-chooseCareer.js"></script>
+  <script src="js/systems/42-leetClick.js"></script>
+  <script src="js/systems/43-showLawDiploma.js"></script>
+  <script src="js/systems/44-applyGraduationBonuses.js"></script>
+  <script src="js/systems/45-closeDiplomaAndGraduate.js"></script>
+  <script src="js/systems/46-checkPromotion.js"></script>
+  <script src="js/systems/47-GRAD_DEPTS.js"></script>
+  <script src="js/systems/48-openGradApply.js"></script>
+  <script src="js/systems/49-selectGradDept.js"></script>
+  <script src="js/systems/50-startGradExam.js"></script>
+  <script src="js/systems/51-gradIntClick.js"></script>
+  <script src="js/systems/52-startNextRound.js"></script>
+  <script src="js/systems/53-openGradSemReg.js"></script>
+  <script src="js/systems/54-checkGradThesisReady.js"></script>
+  <script src="js/systems/55-removeGradItem.js"></script>
+  <script src="js/systems/56-spawnGradBosses.js"></script>
+  <script src="js/systems/57-checkGradReady.js"></script>
+  <script src="js/systems/58-showCareerChoicePostMaster.js"></script>
+  <script src="js/systems/59-BOSS_DEFS.js"></script>
+  <script src="js/engine/01-bossProjectiles.js"></script>
+  <script src="js/engine/02-INTERN_LIST.js"></script>
+  <script src="js/engine/03-spawnBossForCourse.js"></script>
+  <script src="js/engine/04-applyBossDamage.js"></script>
+  <script src="js/engine/05-startCritiqueGame.js"></script>
+  <script src="js/engine/06-updateTAs.js"></script>
+  <script src="js/engine/07-addLog.js"></script>
+  <script src="js/engine/08-keys2.js"></script>
+  <script src="js/engine/09-catCourseColors.js"></script>
+
+</body>
+</html>

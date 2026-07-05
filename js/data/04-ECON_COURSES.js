@@ -1,0 +1,70 @@
+const AGRI_COURSES_SHARED_WITH_ECON = ['M2649.001100','M2649.001200','M2649.001300','M2649.001400','M2649.001600']; // 경제학부 불인정
+// 경제통계학 코드
+const ECON_STAT_CODE = '212.204';
+
+const ECON_COURSES = [
+  // 매학기 열리는 필수/기초
+  {code:"200.105", name:"경제학원론 1", credit:3, category:"econ", type:"normal", semester:[1], everyTerm:true, recPick:2},
+  {code:"200.106", name:"경제학원론 2", credit:3, category:"econ", type:"normal", semester:[2], everyTerm:true, recPick:2},
+  {code:"212.201", name:"미시경제학", credit:3, category:"econ", type:"required_econ", semester:12, everyTerm:true, recPick:1},
+  {code:"212.202", name:"거시경제학", credit:3, category:"econ", type:"required_econ", semester:12, everyTerm:true, recPick:1},
+  {code:"212.203", name:"경제사", credit:3, category:"econ", type:"required_econ", semester:[1], everyTerm:true},
+  {code:"212.204", name:"경제통계학", credit:3, category:"econ", type:"required_econ", semester:[2], everyTerm:true, recPick:2},
+  {code:"212.214", name:"경제수학", credit:3, category:"econ", type:"required_econ", semester:12, everyTerm:true, recPick:2},
+  // 2학년
+  {code:"212.213", name:"국제경제론", credit:3, category:"econ", type:"normal", semester:[2]},
+  // 3학년 1학기
+  {code:"212.301", name:"계량경제학", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"212.303", name:"화폐금융론", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"212.305", name:"재정학", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"212.307", name:"국제무역론", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"212.309", name:"국제금융론", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"212.314", name:"한국경제사", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"212.317", name:"산업조직론", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"212.326", name:"노사관계론", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"212.337A", name:"주식채권파생금융상품2: 제도", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"212.339", name:"게임이론 및 응용", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"M1314.000200", name:"북한경제론", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"M1314.001100", name:"행태경제학", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"M1314.001700", name:"경영학연습", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"M1314.003500", name:"한국금융정책세미나", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"M1314.003800", name:"경제학과 시장경제의 이해", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"M1314.003900", name:"경제분석을 위한 머신러닝", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"M1314.004500", name:"재정 및 조세정책 디자인", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"M1314.005200", name:"경제분석 및 예측과 데이터지능1", credit:3, category:"econ", type:"normal", semester:[1]},
+  // 3학년 2학기
+  {code:"212.206", name:"노동경제학", credit:3, category:"econ", type:"normal", semester:[2]},
+  {code:"212.313", name:"동양경제사", credit:3, category:"econ", type:"normal", semester:[2]},
+  // 경제학사 제거됨
+  {code:"212.338A", name:"주식채권파생금융상품1: 이론", credit:3, category:"econ", type:"normal", semester:[2]},
+  {code:"212.342", name:"인구와 경제", credit:3, category:"econ", type:"normal", semester:[2]},
+  {code:"212.343", name:"조세론", credit:3, category:"econ", type:"normal", semester:[2]},
+  {code:"212.348", name:"고급계량경제학", credit:3, category:"econ", type:"normal", semester:[2]},
+  {code:"212.350", name:"정치경제의 이해", credit:3, category:"econ", type:"normal", semester:[2]},
+  {code:"M1314.000100", name:"응용계량경제학", credit:3, category:"econ", type:"normal", semester:[2]},
+  {code:"M1314.001900", name:"거시 금융 경제학", credit:3, category:"econ", type:"normal", semester:[2]},
+  {code:"M1314.002700", name:"교육경제학", credit:3, category:"econ", type:"normal", semester:[2]},
+  {code:"M1314.003600", name:"한국의 경제발전과 세계경제", credit:3, category:"econ", type:"normal", semester:[2]},
+  {code:"M1314.003700", name:"이론 거시경제 분석", credit:3, category:"econ", type:"normal", semester:[2]},
+  {code:"M1314.004600", name:"한국 경제발전의 이해", credit:3, category:"econ", type:"normal", semester:[2]},
+  {code:"M1314.004700", name:"경제와 기업의 경영전략", credit:3, category:"econ", type:"normal", semester:[2]},
+  {code:"M1314.005100", name:"건강경제학", credit:3, category:"econ", type:"normal", semester:[2]},
+  // 4학년 1학기
+  {code:"212.412", name:"한국경제론", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"212.419", name:"경제학고전강독", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"212.471", name:"동태적 거시경제이론", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"212.472", name:"이행기경제와 경제체제론", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"M1314.000500", name:"메커니즘 디자인", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"M1314.002500", name:"주식채권파생금융상품3: 실증", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"M1314.002900", name:"고급 금융경제세미나", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"M1314.003400", name:"정치경제와 게임이론", credit:3, category:"econ", type:"normal", semester:[1]},
+  {code:"M1314.004900", name:"혁신경제 이론 및 응용", credit:3, category:"econ", type:"normal", semester:[1]},
+  // 4학년 2학기
+  {code:"212.468B", name:"계약경제학1", credit:3, category:"econ", type:"normal", semester:[2]},
+  {code:"212.474", name:"경제예측 및 시계열 분석", credit:3, category:"econ", type:"normal", semester:[2]},
+  {code:"212.476", name:"정보경제학", credit:3, category:"econ", type:"normal", semester:[2]},
+  {code:"212.478", name:"금융 중개와 규제", credit:3, category:"econ", type:"normal", semester:[2]},
+  {code:"M1314.000400", name:"시장설계 이론 및 응용", credit:3, category:"econ", type:"normal", semester:[2]},
+  {code:"M1314.002200", name:"디지털 경제", credit:3, category:"econ", type:"normal", semester:[2]},
+  {code:"M1314.002600", name:"경제 분석을 위한 데이터사이언스", credit:3, category:"econ", type:"normal", semester:[2]},
+];
